@@ -8,6 +8,7 @@ import 'package:buana_vpad/screens/controller_list_page.dart';
 import 'package:buana_vpad/screens/controller_preview_page.dart';
 import 'package:buana_vpad/screens/settings_page.dart';
 import 'package:buana_vpad/utils/fpv_layout_factory.dart';
+import 'package:buana_vpad/utils/settings_manager.dart';
 import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
 import 'package:buana_vpad/widgets/fpv_ui_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -20,6 +21,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  // Background state (default false = 12.webp image, true = WebGL 3D model)
+  bool _use3dModel = false;
+
   // Flight tuning state
   bool _stickyThrottle = true;
   double _stickExpo = 35.0; // 0 to 100%
@@ -41,10 +45,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void initState() {
     super.initState();
     _lockLandscape();
+    _loadBackgroundPreference();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
+  }
+
+  Future<void> _loadBackgroundPreference() async {
+    final use3d = await SettingsManager.getUse3dModel();
+    if (mounted) {
+      setState(() => _use3dModel = use3d);
+    }
   }
 
   @override
@@ -154,7 +166,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               ),
               child: ClipRRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                  filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
                   child: SafeArea(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -608,12 +620,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _buildCompactActionTile(
             title: 'Configuraciones Generales',
             icon: Icons.settings,
-            onTap: () {
+            onTap: () async {
               Navigator.pop(context);
-              Navigator.push(
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const SettingsPage()),
               );
+              _lockLandscape();
+              _loadBackgroundPreference();
             },
           ),
 
@@ -1005,11 +1019,24 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // ── LAYER 1: 3D Model Canvas (Pure Background Element) ────────
-              const Positioned.fill(
-                child: FpvDrone3dViewer(
-                  isFullScreen: true,
-                ),
+              // ── LAYER 1: Background (12.webp Image by default OR 3D Model WebGL) ──
+              Positioned.fill(
+                child: _use3dModel
+                    ? const FpvDrone3dViewer(isFullScreen: true)
+                    : Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            'assets/images/drone_bg.webp',
+                            fit: BoxFit.cover,
+                            alignment: Alignment.center,
+                          ),
+                          // Subtle dark tint to ensure UI icons and widgets pop with maximum contrast
+                          Container(
+                            color: Colors.black.withOpacity(0.35),
+                          ),
+                        ],
+                      ),
               ),
 
               // ── LAYER 2: TOP BAR (FPV Goggles OSD Typography) ─────────────
@@ -1096,6 +1123,53 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
               ),
 
+              // ── LAYER 2.5: AGGRESSIVE HERO TITLE ON THE LEFT SIDE ─────────
+              Positioned(
+                left: 24,
+                top: 75,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 22,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'BUANA VPAD',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 26,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 3.5,
+                            height: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: Text(
+                        'HIGH SPEED DRONE TELEMETRY // CYBER LINK',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          color: Colors.white.withOpacity(0.65),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // ── LAYER 3: BOTTOM-RIGHT STRIPED CONNECT BUTTON & LOADER ──────
               Positioned(
                 bottom: 16,
@@ -1104,35 +1178,44 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Small gray text with 3 animated tiny loader dots above the button
+                    // Frosted bar with 5 animated dots loader
                     AnimatedBuilder(
                       animation: _pulseController,
                       builder: (context, _) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 6, right: 6),
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.20),
+                              width: 0.8,
+                            ),
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 'BUSCANDO SEÑALES',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.45),
+                                  color: Colors.white.withOpacity(0.60),
                                   fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.4,
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              // 3 tiny dots loader
-                              ...List.generate(3, (index) {
+                              const SizedBox(width: 6),
+                              // 5 dots loader
+                              ...List.generate(5, (index) {
                                 final dotOpacity =
-                                    ((_pulseController.value + (index * 0.33)) % 1.0)
-                                        .clamp(0.2, 1.0);
+                                    ((_pulseController.value + (index * 0.20)) % 1.0)
+                                        .clamp(0.25, 1.0);
                                 return Padding(
-                                  padding: const EdgeInsets.only(left: 2),
+                                  padding: const EdgeInsets.only(left: 3),
                                   child: Container(
-                                    width: 3.5,
-                                    height: 3.5,
+                                    width: 4,
+                                    height: 4,
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: Colors.white.withOpacity(dotOpacity),
@@ -1146,7 +1229,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                       },
                     ),
 
-                    // White button with 3 diagonal transparent stripes
+                    // White button with aggressive diagonal slanted edges
                     StripedConnectButton(
                       onTap: () => _openConnectSuitePopup(context),
                     ),

@@ -265,14 +265,29 @@ class _ControllerListPageState extends State<ControllerListPage> {
           width: MediaQuery.of(context).size.width * 0.48,
           height: double.infinity,
           decoration: BoxDecoration(
-            color: const Color(0xF2080808),
-            border: Border(
-              left: BorderSide(color: Colors.white.withOpacity(0.12), width: 1),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.12),
+                Colors.white.withOpacity(0.04),
+                Colors.black.withOpacity(0.20),
+              ],
             ),
+            border: Border(
+              left: BorderSide(color: Colors.white.withOpacity(0.25), width: 1),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 24,
+                offset: const Offset(-4, 0),
+              ),
+            ],
           ),
           child: ClipRRect(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
               child: SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

@@ -16,6 +16,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   String? _deviceName;
   String? _deviceId;
+  bool _use3dModel = false;
 
   @override
   void initState() {
@@ -30,9 +31,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadSettings() async {
     final name = await SettingsManager.getDeviceName();
     final id = await SettingsManager.getDeviceId();
+    final use3d = await SettingsManager.getUse3dModel();
     setState(() {
       _deviceName = name;
       _deviceId = id;
+      _use3dModel = use3d;
     });
   }
 
@@ -215,6 +218,35 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
+            // Fondo de Pantalla Section
+            _buildSection(
+              title: 'FONDO DE PANTALLA',
+              children: [
+                _buildSwitchTile(
+                  title: 'Visor 3D Interactivo de Fondo',
+                  subtitle: _use3dModel
+                      ? 'Activo: Modelo 3D WebGL de fondo'
+                      : 'Inactivo: Fondo Cyber Dron (12.webp)',
+                  value: _use3dModel,
+                  onChanged: (val) async {
+                    await SettingsManager.setUse3dModel(val);
+                    setState(() => _use3dModel = val);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(val
+                              ? 'Fondo cambiado a Modelo 3D'
+                              : 'Fondo cambiado a Imagen Cyber Dron'),
+                          backgroundColor: const Color(0xFF222222),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+
             // Application Section
             _buildSection(
               title: 'APLICACIÓN',
@@ -331,6 +363,41 @@ class _SettingsPageState extends State<SettingsPage> {
           : null,
       trailing: trailing,
       onTap: onTap,
+    );
+  }
+
+  Widget _buildSwitchTile({
+    required String title,
+    String? subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return ListTile(
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
+              ),
+            )
+          : null,
+      trailing: Switch(
+        value: value,
+        activeColor: Colors.black,
+        activeTrackColor: Colors.white,
+        inactiveThumbColor: Colors.white60,
+        inactiveTrackColor: Colors.white12,
+        onChanged: onChanged,
+      ),
     );
   }
 }

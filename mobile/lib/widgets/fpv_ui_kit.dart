@@ -111,7 +111,8 @@ class LiquidGlassCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+        // Slightly reduced blur so background details stay crisp and modern
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -120,7 +121,7 @@ class LiquidGlassCard extends StatelessWidget {
             highlightColor: Colors.white.withOpacity(0.06),
             child: Container(
               decoration: BoxDecoration(
-                // Liquid glass translucency (mostly transparent, not black carbon)
+                // Liquid glass translucency
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -137,8 +138,8 @@ class LiquidGlassCard extends StatelessWidget {
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.25),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -194,8 +195,8 @@ class PillBadge extends StatelessWidget {
   }
 }
 
-/// White button with 3 diagonal transparent stripes as requested by the user.
-/// Aesthetic: pure white, 3 slashes cut across, labeled "CONECTAR".
+/// Slanted aggressive button: Left and right edges cut in diagonal (parallelogram / cyber style),
+/// pure white fill, sharp military FPV look with 3 diagonal stripes.
 class StripedConnectButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -206,74 +207,88 @@ class StripedConnectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const double slant = 14.0;
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: Container(
-            height: 44,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.4),
-                width: 1.0,
+      child: ClipPath(
+        clipper: _SlantedParallelogramClipper(slant: slant),
+        child: Container(
+          height: 44,
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.white.withOpacity(0.35),
+                blurRadius: 16,
+                offset: const Offset(0, 2),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
+              BoxShadow(
+                color: Colors.black.withOpacity(0.4),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // The 3 diagonal transparent stripes
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _ThreeDiagonalStripesPainter(),
                 ),
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // The 3 diagonal transparent stripes drawn on the right side
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _ThreeDiagonalStripesPainter(),
-                  ),
-                ),
+              ),
 
-                // Button label and connection icon
-                const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.power_settings_new,
+              // Button label and connection icon
+              const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.power_settings_new,
+                    color: Colors.black,
+                    size: 17,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'CONECTAR',
+                    style: TextStyle(
                       color: Colors.black,
-                      size: 17,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.6,
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      'CONECTAR',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    SizedBox(width: 20), // breathing room for the 3 diagonal stripes
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                  SizedBox(width: 16),
+                ],
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+}
+
+/// Clips a rectangular button into an aggressive slanted parallelogram:
+/// Both left and right borders slant diagonally to the right (slanted edges).
+class _SlantedParallelogramClipper extends CustomClipper<Path> {
+  final double slant;
+  const _SlantedParallelogramClipper({this.slant = 14.0});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    path.moveTo(slant, 0); // top-left slanted right
+    path.lineTo(size.width, 0); // top-right
+    path.lineTo(size.width - slant, size.height); // bottom-right slanted right
+    path.lineTo(0, size.height); // bottom-left
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(_SlantedParallelogramClipper oldClipper) => oldClipper.slant != slant;
 }
 
 /// Draws 3 diagonal transparent stripes across the right portion of the button
@@ -328,7 +343,7 @@ class GlassCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Material(
           color: Colors.transparent,
           child: InkWell(

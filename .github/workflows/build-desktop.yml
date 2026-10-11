@@ -1,0 +1,41 @@
+name: Compilar Servidor PC Windows (.exe)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Permite compilar manualmente desde GitHub Actions
+
+jobs:
+  build-desktop:
+    name: Compilar BuanaVPad PC FPV (.exe)
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - name: Descargar codigo del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Empaquetar con PyInstaller (.exe portable)
+        run: |
+          pyinstaller --noconfirm --onedir --windowed --name "BuanaVPad-FPV" --icon "src/gui/resources/icon.ico" main.py
+
+      - name: Subir aplicacion de PC compilada (.zip / artefacto)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BuanaVPad-PC-FPV-Windows
+          path: desktop/dist/BuanaVPad-FPV/
+          retention-days: 14

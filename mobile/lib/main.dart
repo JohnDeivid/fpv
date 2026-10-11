@@ -41,6 +41,32 @@ class MyApp extends StatelessWidget {
           elevation: 0,
           foregroundColor: Colors.white,
         ),
+        bottomSheetTheme: const BottomSheetThemeData(
+          backgroundColor: Color(0xE6141414), // Frosted dark translucent
+          modalBackgroundColor: Color(0xE6141414),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            side: BorderSide(color: Color(0x33FFFFFF), width: 1),
+          ),
+        ),
+        dialogTheme: DialogTheme(
+          backgroundColor: const Color(0xE6161616),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+            side: const BorderSide(color: Color(0x33FFFFFF), width: 1),
+          ),
+          titleTextStyle: const TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+          ),
+          contentTextStyle: const TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+          ),
+        ),
         scaffoldBackgroundColor: const Color(0xFF000000),
       ),
       home: const HomePage(),
