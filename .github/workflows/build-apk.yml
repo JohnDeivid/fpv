@@ -1,6 +1,8 @@
 name: Compilar APK en la Nube
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch: # Botón manual en la pestaña Actions de GitHub
 
 jobs:
