@@ -85,42 +85,44 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: widget.isFullScreen ? null : widget.height,
-      color: Colors.transparent,
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 1. The Interactive 3D WebGL Canvas
-          if (!_hasError)
-            WebViewWidget(
-              controller: _controller,
-              gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                Factory<OneSequenceGestureRecognizer>(
-                  () => EagerGestureRecognizer(),
-                ),
-              },
-            )
-          else
-            const SizedBox.shrink(),
+    return ClipRect(
+      child: Container(
+        height: widget.isFullScreen ? null : widget.height,
+        color: Colors.transparent,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 1. The Interactive 3D WebGL Canvas
+            if (!_hasError)
+              WebViewWidget(
+                controller: _controller,
+                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                  Factory<OneSequenceGestureRecognizer>(
+                    () => EagerGestureRecognizer(),
+                  ),
+                },
+              )
+            else
+              const SizedBox.shrink(),
 
-          // 2. Minimalist subtle loading indicator (fades away completely)
-          if (_isLoading)
-            Center(
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
-                  strokeWidth: 1.5,
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white38),
-                  backgroundColor: Colors.white10,
+            // 2. Minimalist subtle loading indicator (fades away completely)
+            if (_isLoading)
+              Center(
+                child: SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CircularProgressIndicator(
+                    value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
+                    strokeWidth: 1.5,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white38),
+                    backgroundColor: Colors.white10,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
 }

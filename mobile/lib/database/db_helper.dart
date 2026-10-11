@@ -239,19 +239,19 @@ class DatabaseHelper {
     Map<String, ButtonLayout> buttons = {};
     for (var buttonMap in buttonMaps) {
       final button = ButtonLayout(
-        id: buttonMap['id'],
-        x: buttonMap['x'],
-        y: buttonMap['y'],
+        id: buttonMap['id'] as String,
+        x: (buttonMap['x'] as num).toDouble(),
+        y: (buttonMap['y'] as num).toDouble(),
         shape: ButtonShape.values
             .firstWhere((e) => e.toString() == buttonMap['shape']),
-        label: buttonMap['label'],
-        width: buttonMap['width'],
-        height: buttonMap['height'],
-        angle: buttonMap['angle'],
-        sensitivity: buttonMap['sensitivity'],
-        deadzone: buttonMap['deadzone'],
+        label: buttonMap['label'] as String,
+        width: (buttonMap['width'] as num).toDouble(),
+        height: (buttonMap['height'] as num).toDouble(),
+        angle: (buttonMap['angle'] as num).toDouble(),
+        sensitivity: (buttonMap['sensitivity'] as num).toDouble(),
+        deadzone: (buttonMap['deadzone'] as num).toDouble(),
         isAnalog: buttonMap['is_analog'] == 1,
-        cornerRadius: buttonMap['corner_radius'],
+        cornerRadius: (buttonMap['corner_radius'] as num).toDouble(),
         hapticFeedback: buttonMap['haptic_feedback'] == 1,
       );
       buttons[button.id] = button;
@@ -261,12 +261,12 @@ class DatabaseHelper {
     JoystickLayout? rightJoystick;
     for (var joystickMap in joystickMaps) {
       final joystick = JoystickLayout(
-        x: joystickMap['x'],
-        y: joystickMap['y'],
-        outerSize: joystickMap['outer_size'],
-        innerSize: joystickMap['inner_size'],
-        deadzone: joystickMap['deadzone'],
-        maxDistance: joystickMap['max_distance'],
+        x: (joystickMap['x'] as num).toDouble(),
+        y: (joystickMap['y'] as num).toDouble(),
+        outerSize: (joystickMap['outer_size'] as num).toDouble(),
+        innerSize: (joystickMap['inner_size'] as num).toDouble(),
+        deadzone: (joystickMap['deadzone'] as num).toDouble(),
+        maxDistance: (joystickMap['max_distance'] as num).toDouble(),
         isDraggable: joystickMap['is_draggable'] == 1,
         isFixed: joystickMap['is_fixed'] == 1,
         hapticEnabled: joystickMap['haptic_enabled'] == 1,
@@ -283,19 +283,19 @@ class DatabaseHelper {
     if (dpadMaps.isNotEmpty) {
       final dpadMap = dpadMaps.first;
       dpadLayout = DPadLayout(
-        centerX: dpadMap['center_x'],
-        centerY: dpadMap['center_y'],
-        size: dpadMap['size'],
+        centerX: (dpadMap['center_x'] as num).toDouble(),
+        centerY: (dpadMap['center_y'] as num).toDouble(),
+        size: (dpadMap['size'] as num).toDouble(),
         hapticEnabled: dpadMap['haptic_enabled'] == 1,
       );
     }
 
     return ControllerLayout(
-      name: layoutMaps.first['name'],
-      id: layoutMaps.first['id'],
+      name: layoutMaps.first['name'] as String,
+      id: layoutMaps.first['id'] as String,
       buttons: buttons,
-      width: layoutMaps.first['width'],
-      height: layoutMaps.first['height'],
+      width: (layoutMaps.first['width'] as num).toDouble(),
+      height: (layoutMaps.first['height'] as num).toDouble(),
       leftJoystick: leftJoystick,
       rightJoystick: rightJoystick,
       dpadLayout: dpadLayout,
