@@ -1,73 +1,54 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:buana_vpad/database/db_helper.dart';
 import 'package:buana_vpad/models/controller_layout.dart';
 import 'package:buana_vpad/screens/controller_preview_page.dart';
-import 'package:buana_vpad/screens/settings_page.dart';
 import 'package:buana_vpad/utils/fpv_layout_factory.dart';
 import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
 import 'package:buana_vpad/widgets/fpv_ui_kit.dart';
 
-// ── Product reference images (official CDN URLs — no download, URL embed) ──
-// These images are served directly from manufacturer CDNs
-const _kDjiImageUrl =
-    'https://www-cdn.djiits.com/dps/12d72ac8d4a954e4618728d6c94ced61.jpg';
-const _kPs5ImageUrl =
-    'https://gmedia.playstation.com/is/image/SIEPDC/dualsense-controller-product-thumbnail-01-en-14sep21?\$S1\$';
-
-// ── Controller type definitions shown in the "Add" sheet ──────────────────
+// ── Controller template definitions using clean vector icons (NO URL/Browser images) ──
 class _ControllerTemplate {
   final String title;
   final String subtitle;
   final String tag;
-  final Color accentColor;
-  final IconData fallbackIcon;
-  final String? imageUrl;
+  final IconData icon;
 
   const _ControllerTemplate({
     required this.title,
     required this.subtitle,
     required this.tag,
-    required this.accentColor,
-    required this.fallbackIcon,
-    this.imageUrl,
+    required this.icon,
   });
 }
 
 const _kTemplates = [
   _ControllerTemplate(
-    title: 'FPV Drone',
-    subtitle: 'Mode 2 · Throttle+Yaw / Pitch+Roll',
+    title: 'FPV Drone Mode 2',
+    subtitle: 'Throttle + Yaw / Pitch + Roll · Acro & Angle',
     tag: 'FPV',
-    accentColor: Color(0xFFFF6B00),
-    fallbackIcon: Icons.flight,
+    icon: Icons.flight,
   ),
   _ControllerTemplate(
-    title: 'DJI RC 2',
-    subtitle: 'DJI drone controller layout',
-    tag: 'DJI',
-    accentColor: Color(0xFF00D4FF),
-    fallbackIcon: Icons.flight_takeoff,
-    imageUrl: _kDjiImageUrl,
+    title: 'DJI Drone Controller',
+    subtitle: 'Cinewhoop & Camera Drone Layout',
+    tag: 'DRONE',
+    icon: Icons.flight_takeoff,
   ),
   _ControllerTemplate(
-    title: 'PlayStation',
-    subtitle: 'DualSense / DualShock layout',
-    tag: 'GAME',
-    accentColor: Color(0xFF7B61FF),
-    fallbackIcon: Icons.gamepad,
-    imageUrl: _kPs5ImageUrl,
+    title: 'PlayStation DualSense',
+    subtitle: 'PlayStation D-pad, Triggers & ABXY',
+    tag: 'PLAY',
+    icon: Icons.play_circle_outline,
   ),
   _ControllerTemplate(
-    title: 'Generic',
-    subtitle: 'Standard ABXY gamepad layout',
+    title: 'Pro Gamepad',
+    subtitle: 'Xbox / Generic Twin-Stick Gamepad',
     tag: 'PAD',
-    accentColor: Color(0xFF44BB88),
-    fallbackIcon: Icons.sports_esports,
+    icon: Icons.sports_esports_outlined,
   ),
 ];
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 class ControllerListPage extends StatefulWidget {
   const ControllerListPage({super.key});
@@ -84,27 +65,20 @@ class _ControllerListPageState extends State<ControllerListPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _setOrientation(context));
+    _lockLandscape();
     _loadLayouts();
   }
 
-  void _setOrientation(BuildContext context) {
-    if (ModalRoute.of(context)?.isCurrent ?? false) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-    }
+  void _lockLandscape() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
   }
 
   @override
   void deactivate() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    _lockLandscape();
     super.deactivate();
   }
 
@@ -116,7 +90,10 @@ class _ControllerListPageState extends State<ControllerListPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: const Color(0xFF222222),
+          ),
         );
       }
     } finally {
@@ -133,14 +110,12 @@ class _ControllerListPageState extends State<ControllerListPage> {
     final isFpv = layout.name.toLowerCase().contains('fpv') ||
         layout.name.toLowerCase().contains('drone');
 
-    final accentColor = isFpv ? const Color(0xFFFF6B00) : const Color(0xFF00D4FF);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: GlassCard(
         padding: const EdgeInsets.all(14),
         borderRadius: 18,
-        borderColor: accentColor.withOpacity(0.15),
+        borderColor: Colors.white.withOpacity(0.12),
         onTap: () async {
           await Navigator.push(
             context,
@@ -148,7 +123,7 @@ class _ControllerListPageState extends State<ControllerListPage> {
               builder: (_) => ControllerPreviewPage(layoutId: layout.id),
             ),
           );
-          _setOrientation(context);
+          _lockLandscape();
           _loadLayouts();
         },
         child: Row(
@@ -156,9 +131,9 @@ class _ControllerListPageState extends State<ControllerListPage> {
             // Controller preview thumbnail
             Container(
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.07),
+                color: Colors.white.withOpacity(0.05),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: accentColor.withOpacity(0.2), width: 0.8),
+                border: Border.all(color: Colors.white.withOpacity(0.12), width: 0.8),
               ),
               padding: const EdgeInsets.all(6),
               child: ClipRRect(
@@ -192,8 +167,8 @@ class _ControllerListPageState extends State<ControllerListPage> {
                   ),
                   const SizedBox(height: 6),
                   PillBadge(
-                    label: isFpv ? 'FPV' : 'GAMEPAD',
-                    color: accentColor,
+                    label: isFpv ? 'FPV MODE 2' : 'GAMEPAD',
+                    icon: isFpv ? Icons.flight : Icons.sports_esports_outlined,
                   ),
                 ],
               ),
@@ -205,7 +180,7 @@ class _ControllerListPageState extends State<ControllerListPage> {
               children: [
                 _IconAction(
                   icon: Icons.edit_outlined,
-                  color: const Color(0xFF00D4FF),
+                  color: Colors.white,
                   onTap: () async {
                     await Navigator.push(
                       context,
@@ -213,14 +188,14 @@ class _ControllerListPageState extends State<ControllerListPage> {
                         builder: (_) => ControllerPreviewPage(layoutId: layout.id),
                       ),
                     );
-                    _setOrientation(context);
+                    _lockLandscape();
                     _loadLayouts();
                   },
                 ),
                 const SizedBox(height: 8),
                 _IconAction(
                   icon: Icons.delete_outline,
-                  color: const Color(0xFFFF4466),
+                  color: Colors.white60,
                   onTap: () => _deleteLayout(layout),
                 ),
               ],
@@ -231,29 +206,32 @@ class _ControllerListPageState extends State<ControllerListPage> {
     );
   }
 
-  // ── Delete confirm ──────────────────────────────────────────────────────
+  // ── Delete confirmation ──────────────────────────────────────────────────
   Future<void> _deleteLayout(ControllerLayout layout) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF0D1B2A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Controller',
-            style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+        ),
+        title: const Text('Eliminar Mando',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: Text(
-          'Delete "${layout.name}"?',
-          style: const TextStyle(color: Color(0xFF8899AA)),
+          '¿Deseas eliminar "${layout.name}"?',
+          style: TextStyle(color: Colors.white.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel',
-                style: TextStyle(color: Color(0xFF8899AA))),
+            child: Text('Cancelar',
+                style: TextStyle(color: Colors.white.withOpacity(0.5))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete',
-                style: TextStyle(color: Color(0xFFFF4466))),
+            child: const Text('Eliminar',
+                style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -267,88 +245,98 @@ class _ControllerListPageState extends State<ControllerListPage> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text('Error: $e'),
-                backgroundColor: Colors.red),
+              content: Text('Error: $e'),
+              backgroundColor: const Color(0xFF222222),
+            ),
           );
         }
       }
     }
   }
 
-  // ── Add new — bottom sheet with product images ──────────────────────────
+  // ── Add new — Frosted modal popup (under 50% width, one-hand friendly) ────
   void _showCreateLayoutMenu() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0A0E17),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Choose Controller Type',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
+      builder: (ctx) => Align(
+        alignment: Alignment.centerRight,
+        child: Container(
+          width: MediaQuery.of(context).size.width * 0.48,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xF2080808),
+            border: Border(
+              left: BorderSide(color: Colors.white.withOpacity(0.12), width: 1),
+            ),
+          ),
+          child: ClipRRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Nuevo Controlador',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white70, size: 20),
+                            onPressed: () => Navigator.pop(ctx),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Selecciona un perfil optimizado',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.4),
+                          fontSize: 12,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: _kTemplates.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (ctx, i) {
+                            final t = _kTemplates[i];
+                            return _TemplateCard(
+                              template: t,
+                              onTap: () async {
+                                Navigator.pop(ctx);
+                                if (t.tag == 'FPV') {
+                                  await _createAndOpenFpvLayout();
+                                } else {
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const ControllerPreviewPage(),
+                                    ),
+                                  );
+                                  _lockLandscape();
+                                  _loadLayouts();
+                                }
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Select a layout to get started',
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.4), fontSize: 13),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Template grid
-              ...List.generate(_kTemplates.length, (i) {
-                final t = _kTemplates[i];
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _TemplateCard(
-                    template: t,
-                    onTap: () async {
-                      Navigator.pop(ctx);
-                      if (t.tag == 'FPV') {
-                        await _createAndOpenFpvLayout();
-                      } else if (t.tag == '3D') {
-                        showFpvDrone3dFullScreen(context);
-                      } else {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const ControllerPreviewPage()),
-                        );
-                        _setOrientation(context);
-                        _loadLayouts();
-                      }
-                    },
-                  ),
-                );
-              }),
-            ],
+            ),
           ),
         ),
       ),
@@ -373,129 +361,99 @@ class _ControllerListPageState extends State<ControllerListPage> {
         builder: (_) => ControllerPreviewPage(initialLayout: fpvLayout),
       ),
     );
-    _setOrientation(context);
+    _lockLandscape();
     _loadLayouts();
   }
 
-  // ── Build ───────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        await SystemChrome.setPreferredOrientations([
-          DeviceOrientation.portraitUp,
-          DeviceOrientation.portraitDown,
-          DeviceOrientation.landscapeLeft,
-          DeviceOrientation.landscapeRight,
-        ]);
+        _lockLandscape();
         return true;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF060A12),
+        backgroundColor: const Color(0xFF000000),
         appBar: AppBar(
-          backgroundColor: const Color(0xFF060A12),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
             onPressed: () => Navigator.pop(context),
           ),
           title: const Text(
-            'Virtual Controllers',
+            'Mis Controladores',
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
             ),
           ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white, size: 20),
-              onPressed: () async {
-                await SystemChrome.setPreferredOrientations([
-                  DeviceOrientation.portraitUp,
-                  DeviceOrientation.portraitDown,
-                  DeviceOrientation.landscapeLeft,
-                  DeviceOrientation.landscapeRight,
-                ]);
-                if (mounted) {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SettingsPage()),
-                  );
-                  _setOrientation(context);
-                }
-              },
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: IconButton(
+                icon: const Icon(Icons.add, color: Colors.white, size: 24),
+                onPressed: _showCreateLayoutMenu,
+              ),
             ),
           ],
         ),
         body: FpvAnimatedBackground(
           child: isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
-                      color: Color(0xFF00D4FF)))
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
               : layouts.isEmpty
-                  ? _buildEmptyState()
-                  : RefreshIndicator(
-                      color: const Color(0xFF00D4FF),
-                      onRefresh: _loadLayouts,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: layouts.length,
-                        itemBuilder: (_, i) => _buildLayoutCard(layouts[i]),
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.flight,
+                              size: 48, color: Colors.white.withOpacity(0.3)),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'No hay mandos guardados',
+                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton.icon(
+                            onPressed: _showCreateLayoutMenu,
+                            icon: const Icon(Icons.add, color: Colors.white, size: 18),
+                            label: const Text(
+                              'Crear Primer Mando',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.1),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 18, vertical: 10),
+                            ),
+                          ),
+                        ],
                       ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      itemCount: layouts.length,
+                      itemBuilder: (_, i) => _buildLayoutCard(layouts[i]),
                     ),
         ),
-        floatingActionButton: layouts.isNotEmpty
-            ? FloatingActionButton(
-                onPressed: _showCreateLayoutMenu,
-                backgroundColor: const Color(0xFF00D4FF),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                child: const Icon(Icons.add),
-              )
-            : null,
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.flight, color: Color(0xFF00D4FF), size: 48),
-          const SizedBox(height: 16),
-          const Text('No controllers yet',
-              style: TextStyle(color: Colors.white, fontSize: 18)),
-          const SizedBox(height: 8),
-          Text('Tap + to create your first layout',
-              style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 13)),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _showCreateLayoutMenu,
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text('New Controller'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF00D4FF),
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-          ),
-        ],
       ),
     );
   }
 }
 
-// ── Icon action button ────────────────────────────────────────────────────
 class _IconAction extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  const _IconAction(
-      {required this.icon, required this.color, required this.onTap});
+
+  const _IconAction({
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -504,9 +462,9 @@ class _IconAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.10),
+          color: Colors.white.withOpacity(0.06),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.25), width: 0.8),
+          border: Border.all(color: Colors.white.withOpacity(0.12), width: 0.8),
         ),
         child: Icon(icon, color: color, size: 18),
       ),
@@ -514,10 +472,11 @@ class _IconAction extends StatelessWidget {
   }
 }
 
-// ── Template card with product image ─────────────────────────────────────
+// ── Template card with clean vector icon (Drone & Play icons) ───────────────
 class _TemplateCard extends StatelessWidget {
   final _ControllerTemplate template;
   final VoidCallback onTap;
+
   const _TemplateCard({required this.template, required this.onTap});
 
   @override
@@ -525,98 +484,62 @@ class _TemplateCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: template.accentColor.withOpacity(0.20), width: 0.8),
+          border: Border.all(color: Colors.white.withOpacity(0.12), width: 0.8),
         ),
         child: Row(
           children: [
-            // Product image or icon
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(15)),
-              child: SizedBox(
-                width: 110,
-                height: 80,
-                child: template.imageUrl != null
-                    ? Image.network(
-                        template.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _fallbackIcon(template),
-                        loadingBuilder: (_, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            color: Colors.white.withOpacity(0.04),
-                            child: Center(
-                              child: SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: template.accentColor,
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      )
-                    : _fallbackIcon(template),
+            // Vector Icon Container (no browser images)
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.15), width: 0.8),
               ),
+              child: Icon(template.icon, color: Colors.white, size: 24),
             ),
+            const SizedBox(width: 14),
 
             // Info
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          template.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        template.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
                         ),
-                        const SizedBox(width: 8),
-                        PillBadge(
-                            label: template.tag, color: template.accentColor),
-                      ],
+                      ),
+                      const SizedBox(width: 6),
+                      PillBadge(label: template.tag),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    template.subtitle,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 11,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      template.subtitle,
-                      style: const TextStyle(
-                          color: Color(0xFF8899AA), fontSize: 11),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
-            const Padding(
-              padding: EdgeInsets.only(right: 14),
-              child: Icon(Icons.chevron_right,
-                  color: Color(0xFF445566), size: 18),
-            ),
+            Icon(Icons.chevron_right, color: Colors.white.withOpacity(0.3), size: 18),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _fallbackIcon(_ControllerTemplate t) {
-    return Container(
-      color: t.accentColor.withOpacity(0.08),
-      child: Icon(t.fallbackIcon, color: t.accentColor, size: 36),
     );
   }
 }

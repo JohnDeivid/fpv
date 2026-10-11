@@ -715,8 +715,8 @@ void didChangeDependencies() {
               icon: Icon(layout.isEditable ? Icons.visibility : Icons.edit),
               label: Text(layout.isEditable ? 'Preview' : 'Edit'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: layout.isEditable ? Colors.amber : Colors.blue[400],
-                foregroundColor: Colors.white,
+                backgroundColor: layout.isEditable ? Colors.white : Colors.grey[850],
+                foregroundColor: layout.isEditable ? Colors.black : Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),

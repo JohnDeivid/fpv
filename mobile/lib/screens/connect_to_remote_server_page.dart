@@ -304,7 +304,8 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                         label: const Text('Back to Gamepad'),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
-                          backgroundColor: Colors.blue,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                         ),
                         onPressed: () {
                           if (_socket != null && _selectedLayout != null && _deviceId != null) {
@@ -393,7 +394,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                             children: [
                                               const Icon(
                                                 Icons.qr_code_scanner,
-                                                color: Colors.blue,
+                                                color: Colors.white,
                                               ),
                                               const SizedBox(width: 12),
                                               Text(
@@ -407,7 +408,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                           ),
                                           const Icon(
                                             Icons.arrow_forward_ios,
-                                            color: Colors.blue,
+                                            color: Colors.white,
                                             size: 16,
                                           ),
                                         ],
@@ -426,7 +427,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                             children: [
                                               const Icon(
                                                 Icons.photo_library,
-                                                color: Colors.blue,
+                                                color: Colors.white,
                                               ),
                                               const SizedBox(width: 12),
                                               Text(
@@ -440,7 +441,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                           ),
                                           const Icon(
                                             Icons.arrow_forward_ios,
-                                            color: Colors.blue,
+                                            color: Colors.white,
                                             size: 16,
                                           ),
                                         ],
@@ -477,7 +478,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.blue),
+                                  borderSide: const BorderSide(color: Colors.white),
                                 ),
                               ),
                               validator: _validateCode,
@@ -628,7 +629,8 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isConnected ? Colors.red : Colors.blue,
+                          backgroundColor: _isConnected ? const Color(0xFFE53935) : Colors.white,
+                          foregroundColor: _isConnected ? Colors.white : Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -665,7 +667,7 @@ class _RemoteServerPageState extends State<RemoteServerPage> {
         children: [
           Icon(
             icon,
-            color: Colors.blue,
+            color: Colors.white,
             size: 20,
           ),
           const SizedBox(width: 12),

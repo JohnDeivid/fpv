@@ -4,6 +4,7 @@ import 'package:buana_vpad/database/db_helper.dart';
 import 'package:buana_vpad/enums/link.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:buana_vpad/utils/settings_manager.dart';
+import 'package:buana_vpad/widgets/fpv_ui_kit.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -19,6 +20,10 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _loadSettings();
   }
 
@@ -41,21 +46,27 @@ class _SettingsPageState extends State<SettingsPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete All Layouts'),
-        content: const Text(
-          'Are you sure you want to delete all controller layouts? This action cannot be undone.',
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+        ),
+        title: const Text('Eliminar todos los mandos',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar todas las configuraciones de controles? Esta acción no se puede deshacer.',
+          style: TextStyle(color: Colors.white.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancelar',
+                style: TextStyle(color: Colors.white.withOpacity(0.5))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Delete All',
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text('Eliminar Todo',
+                style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -67,9 +78,9 @@ class _SettingsPageState extends State<SettingsPage> {
         await dbHelper.deleteAllControllerLayouts();
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('All layouts deleted successfully'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Mandos eliminados correctamente'),
+              backgroundColor: const Color(0xFF222222),
             ),
           );
         }
@@ -77,8 +88,8 @@ class _SettingsPageState extends State<SettingsPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error deleting layouts: $e'),
-              backgroundColor: Colors.red,
+              content: Text('Error al eliminar: $e'),
+              backgroundColor: const Color(0xFF222222),
             ),
           );
         }
@@ -93,21 +104,36 @@ class _SettingsPageState extends State<SettingsPage> {
     final newName = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Device Name'),
+        backgroundColor: const Color(0xFF141414),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Colors.white.withOpacity(0.15)),
+        ),
+        title: const Text('Editar Nombre del Dispositivo',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Enter device name',
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: 'Ingresa un nombre',
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.4)),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+            ),
+            focusedBorder: const UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text('Cancelar',
+                style: TextStyle(color: Colors.white.withOpacity(0.5))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, controller.text),
-            child: const Text('Save'),
+            child: const Text('Guardar', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -121,8 +147,8 @@ class _SettingsPageState extends State<SettingsPage> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Device name updated'),
-            backgroundColor: Colors.green,
+            content: Text('Nombre actualizado'),
+            backgroundColor: Color(0xFF222222),
           ),
         );
       }
@@ -132,38 +158,34 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF000000),
       appBar: AppBar(
         title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
+          'Configuraciones',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.grey[900],
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 18),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.grey[900]!,
-              Colors.grey[850]!,
-            ],
-          ),
-        ),
+      body: FpvAnimatedBackground(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           children: [
             // Device Section
             _buildSection(
-              title: 'Device',
+              title: 'DISPOSITIVO',
               children: [
                 _buildListTile(
                   title: 'Device ID',
-                  subtitle: _deviceId ?? 'Loading...',
+                  subtitle: _deviceId ?? 'Cargando...',
                   trailing: const Icon(
                     Icons.copy,
-                    color: Colors.blue,
+                    color: Colors.white70,
+                    size: 18,
                   ),
                   onTap: () async {
                     if (_deviceId != null) {
@@ -171,8 +193,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Device ID copied to clipboard'),
-                            backgroundColor: Colors.green,
+                            content: Text('Device ID copiado al portapapeles'),
+                            backgroundColor: Color(0xFF222222),
                           ),
                         );
                       }
@@ -180,11 +202,12 @@ class _SettingsPageState extends State<SettingsPage> {
                   },
                 ),
                 _buildListTile(
-                  title: 'Device Name',
-                  subtitle: _deviceName ?? 'Loading...',
+                  title: 'Nombre de Dispositivo',
+                  subtitle: _deviceName ?? 'Cargando...',
                   trailing: const Icon(
                     Icons.edit,
-                    color: Colors.blue,
+                    color: Colors.white70,
+                    size: 18,
                   ),
                   onTap: () =>
                       _showEditDeviceNameDialog(context, _deviceName ?? ''),
@@ -192,45 +215,17 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
 
-            // Theme Section
-            _buildSection(
-              title: 'Theme',
-              children: [
-                _buildListTile(
-                  title: 'Dark/Light Theme',
-                  subtitle: 'Coming soon',
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'In Development',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
-                  onTap: () {}, // Disabled for now
-                ),
-              ],
-            ),
-
             // Application Section
             _buildSection(
-              title: 'Application',
+              title: 'APLICACIÓN',
               children: [
                 _buildListTile(
-                  title: 'Delete All Layouts',
-                  subtitle: 'Remove all controller configurations',
+                  title: 'Eliminar Todos los Mandos',
+                  subtitle: 'Restablecer esquemas de control guardados',
                   trailing: const Icon(
                     Icons.delete_forever,
-                    color: Colors.red,
+                    color: Colors.white54,
+                    size: 18,
                   ),
                   onTap: () => _showDeleteConfirmation(context),
                 ),
@@ -239,23 +234,15 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Developer Section
             _buildSection(
-              title: 'Developer',
+              title: 'DESARROLLADOR',
               children: [
                 _buildListTile(
-                  title: 'LinkedIn',
-                  subtitle: 'View developer profile',
+                  title: 'Perfil GitHub',
+                  subtitle: 'Código y proyectos',
                   trailing: const Icon(
                     Icons.launch,
-                    color: Colors.blue,
-                  ),
-                  onTap: () => _launchUrl(Link.developerLinkedin.path),
-                ),
-                _buildListTile(
-                  title: 'GitHub Profile',
-                  subtitle: 'Check out other projects',
-                  trailing: const Icon(
-                    Icons.launch,
-                    color: Colors.blue,
+                    color: Colors.white70,
+                    size: 18,
                   ),
                   onTap: () => _launchUrl(Link.developerGithubAccount.path),
                 ),
@@ -264,73 +251,21 @@ class _SettingsPageState extends State<SettingsPage> {
 
             // Project Section
             _buildSection(
-              title: 'Project',
+              title: 'PROYECTO & VERSIÓN',
               children: [
                 _buildListTile(
-                  title: 'GitHub Repository',
-                  subtitle: 'View source code',
+                  title: 'Repositorio Buana VPad',
+                  subtitle: 'Ver código fuente',
                   trailing: const Icon(
                     Icons.launch,
-                    color: Colors.blue,
+                    color: Colors.white70,
+                    size: 18,
                   ),
                   onTap: () => _launchUrl(Link.githubSourceRepo.path),
                 ),
                 _buildListTile(
-                  title: 'View Licenses',
-                  subtitle: 'Open source licenses',
-                  trailing: const Icon(
-                    Icons.launch,
-                    color: Colors.blue,
-                  ),
-                  onTap: () => _launchUrl(Link.license.path),
-                ),
-                _buildListTile(
-                  title: 'Version',
-                  subtitle: 'v1.0.5',
-                ),
-              ],
-            ),
-
-            // Support Section
-            _buildSection(
-              title: 'Support & Community',
-              children: [
-                _buildListTile(
-                  title: 'Discord',
-                  subtitle: 'isacitrabuana',
-                  trailing: const Icon(
-                    Icons.copy,
-                    color: Colors.blue,
-                  ),
-                  onTap: () async {
-                    await Clipboard.setData(
-                        const ClipboardData(text: 'isacitrabuana'));
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Discord username copied to clipboard'),
-                          duration: Duration(seconds: 2),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  },
-                ),
-              ],
-            ),
-
-            // Documentation Section
-            _buildSection(
-              title: 'Documentation',
-              children: [
-                _buildListTile(
-                  title: 'User Guide',
-                  subtitle: 'Learn how to use the app',
-                  trailing: const Icon(
-                    Icons.launch,
-                    color: Colors.blue,
-                  ),
-                  onTap: () => _launchUrl(Link.userGuide.path),
+                  title: 'Versión del Sistema',
+                  subtitle: 'v2.5.0 • Monochrome FPV Pro Edition',
                 ),
               ],
             ),
@@ -348,22 +283,20 @@ class _SettingsPageState extends State<SettingsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+          padding: const EdgeInsets.fromLTRB(8, 18, 8, 8),
           child: Text(
             title,
-            style: const TextStyle(
-              color: Colors.blue,
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.4),
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
             ),
           ),
         ),
-        Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8),
-          color: Colors.grey[850],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          borderRadius: 16,
           child: Column(
             children: children,
           ),
@@ -383,6 +316,7 @@ class _SettingsPageState extends State<SettingsPage> {
         title,
         style: const TextStyle(
           color: Colors.white,
+          fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -390,7 +324,8 @@ class _SettingsPageState extends State<SettingsPage> {
           ? Text(
               subtitle,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Colors.white.withOpacity(0.5),
+                fontSize: 12,
               ),
             )
           : null,

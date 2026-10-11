@@ -96,13 +96,17 @@ class _ButtonWidgetState extends State<ButtonWidget> {
           height: widget.layout.width,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(widget.state?.isPressed == true ? 0.45 : 0.20),
+              width: 1.0,
+            ),
             color: widget.state?.isPressed == true
-                ? Colors.blue.withOpacity(pressedOpacity)
-                : Colors.blue.withOpacity(baseOpacity),
+                ? Colors.white.withOpacity(pressedOpacity.clamp(0.0, 0.9))
+                : Colors.white.withOpacity(baseOpacity),
             boxShadow: widget.state?.isPressed == true
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Colors.white.withOpacity(0.35),
                       blurRadius: 8 * currentValue,
                       spreadRadius: 2 * currentValue,
                     )
@@ -115,7 +119,7 @@ class _ButtonWidgetState extends State<ButtonWidget> {
               style: TextStyle(
                 fontSize: widget.layout.width * 0.4,
                 color: Colors.white,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -134,13 +138,17 @@ class _ButtonWidgetState extends State<ButtonWidget> {
           height: rectHeight,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(widget.layout.cornerRadius),
+            border: Border.all(
+              color: Colors.white.withOpacity(widget.state?.isPressed == true ? 0.45 : 0.20),
+              width: 1.0,
+            ),
             color: widget.state?.isPressed == true
-                ? Colors.blue.withOpacity(pressedOpacity)
-                : Colors.blue.withOpacity(baseOpacity),
+                ? Colors.white.withOpacity(pressedOpacity.clamp(0.0, 0.9))
+                : Colors.white.withOpacity(baseOpacity),
             boxShadow: widget.state?.isPressed == true
                 ? [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.3),
+                      color: Colors.white.withOpacity(0.35),
                       blurRadius: 8 * currentValue,
                       spreadRadius: 2 * currentValue,
                     )

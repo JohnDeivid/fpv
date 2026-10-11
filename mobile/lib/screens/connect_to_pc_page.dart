@@ -333,7 +333,8 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                         label: const Text('Back to Gamepad'),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.all(16),
-                          backgroundColor: Colors.blue,
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.black,
                         ),
                         onPressed: () {
                           if (_socket != null && _selectedLayout != null && _deviceId != null) {
@@ -421,7 +422,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.blue),
+                                  borderSide: const BorderSide(color: Colors.white),
                                 ),
                               ),
                               validator: _validateIP,
@@ -447,7 +448,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.blue),
+                                  borderSide: const BorderSide(color: Colors.white),
                                 ),
                               ),
                               validator: _validatePort,
@@ -543,12 +544,12 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                     horizontal: 16, vertical: 12),
                                 decoration: BoxDecoration(
                                   color: _isFpvMode
-                                      ? Colors.orange.withOpacity(0.12)
+                                      ? Colors.white.withOpacity(0.12)
                                       : Colors.grey[850],
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: _isFpvMode
-                                        ? Colors.orange.withOpacity(0.6)
+                                        ? Colors.white.withOpacity(0.6)
                                         : Colors.white.withOpacity(0.1),
                                     width: 1.5,
                                   ),
@@ -586,7 +587,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                     ),
                                     Switch(
                                       value: _isFpvMode,
-                                      activeColor: Colors.orange,
+                                      activeColor: Colors.white,
                                       onChanged: _isConnected
                                           ? null
                                           : (v) =>
@@ -605,17 +606,17 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 14, vertical: 10),
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.withOpacity(0.08),
+                                      color: Colors.white.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: Colors.orange.withOpacity(0.35),
+                                        color: Colors.white.withOpacity(0.35),
                                         width: 1,
                                       ),
                                     ),
                                     child: Row(
                                       children: [
                                         const Icon(Icons.view_in_ar,
-                                            color: Colors.orange, size: 20),
+                                            color: Colors.white, size: 20),
                                         const SizedBox(width: 10),
                                         const Expanded(
                                           child: Text(
@@ -629,7 +630,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                         ),
                                         IconButton(
                                           icon: const Icon(Icons.fullscreen,
-                                              color: Colors.orange, size: 20),
+                                              color: Colors.white, size: 20),
                                           padding: EdgeInsets.zero,
                                           constraints: const BoxConstraints(),
                                           tooltip: 'Pantalla completa',
@@ -641,7 +642,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                           _showFpv3dPreview
                                               ? Icons.keyboard_arrow_up
                                               : Icons.keyboard_arrow_down,
-                                          color: Colors.orange,
+                                          color: Colors.white,
                                           size: 20,
                                         ),
                                       ],
@@ -711,7 +712,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                           ),
                                           trailing: const Icon(
                                             Icons.arrow_forward_ios,
-                                            color: Colors.blue,
+                                            color: Colors.white,
                                             size: 16,
                                           ),
                                           onTap: () => _selectDevice(device),
@@ -727,7 +728,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                               width: double.infinity,
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.grey[800],
+                                color: Colors.grey[850],
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: InkWell(
@@ -739,7 +740,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                       children: [
                                         const Icon(
                                           Icons.wifi_find,
-                                          color: Colors.blue,
+                                          color: Colors.white,
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
@@ -798,7 +799,8 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _isConnected ? Colors.red : Colors.blue,
+                          backgroundColor: _isConnected ? const Color(0xFFE53935) : Colors.white,
+                          foregroundColor: _isConnected ? Colors.white : Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

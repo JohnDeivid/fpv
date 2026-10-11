@@ -1,18 +1,21 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// Interactive 3D Viewer Widget for the FPV Freestyle Drone & RadioMaster Transmitter
+/// Interactive 3D Viewer Widget for the FPV Drone & RadioMaster Transmitter
+/// Pure monochrome aesthetic: dark slate, crisp whites, frosted glass. ZERO BLUE / ORANGE.
 class FpvDrone3dViewer extends StatefulWidget {
-  final double height;
+  final double? height;
   final bool isFullScreen;
+  final bool showHeader;
   final VoidCallback? onToggleFullScreen;
 
   const FpvDrone3dViewer({
     super.key,
-    this.height = 320,
+    this.height,
     this.isFullScreen = false,
+    this.showHeader = true,
     this.onToggleFullScreen,
   });
 
@@ -41,14 +44,14 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
   void _initWebView() {
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0xFF121418))
+      ..setBackgroundColor(const Color(0xFF000000))
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
             if (mounted) {
               setState(() {
                 _loadingProgress = progress;
-                if (progress == 100) {
+                if (progress >= 95) {
                   _isLoading = false;
                 }
               });
@@ -85,27 +88,19 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final container = Container(
+    return Container(
       height: widget.isFullScreen ? null : widget.height,
       decoration: BoxDecoration(
-        color: const Color(0xFF14171E),
-        borderRadius: BorderRadius.circular(widget.isFullScreen ? 0 : 16),
+        color: const Color(0xFF050505),
+        borderRadius: BorderRadius.circular(widget.isFullScreen ? 0 : 20),
         border: Border.all(
-          color: Colors.orange.withOpacity(widget.isFullScreen ? 0 : 0.45),
-          width: 1.5,
+          color: Colors.white.withOpacity(widget.isFullScreen ? 0 : 0.08),
+          width: 0.8,
         ),
-        boxShadow: widget.isFullScreen
-            ? []
-            : [
-                BoxShadow(
-                  color: Colors.orange.withOpacity(0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
+        fit: StackFit.expand,
         children: [
           // 1. The Interactive 3D WebGL Canvas
           if (!_hasError)
@@ -120,109 +115,76 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
           else
             _buildErrorState(),
 
-          // 2. Futuristic Loading Overlay
+          // 2. Loading Overlay
           if (_isLoading) _buildLoadingState(),
 
-          // 3. Top Badges & FullScreen Action Header
-          Positioned(
-            top: 10,
-            left: 12,
-            right: 12,
-            child: Row(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.orange.withOpacity(0.6),
-                      width: 1,
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.view_in_ar, size: 14, color: Colors.orange),
-                      SizedBox(width: 5),
-                      Text(
-                        '3D FPV MODEL • PBR 4K',
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10.5,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                if (widget.onToggleFullScreen != null)
-                  InkWell(
-                    onTap: widget.onToggleFullScreen,
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.75),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Icon(
-                        widget.isFullScreen
-                            ? Icons.fullscreen_exit
-                            : Icons.fullscreen,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          // 4. Bottom Interactive Gesture Tip
-          Positioned(
-            bottom: 8,
-            left: 12,
-            right: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.65),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+          // 3. Top Badges & FullScreen Action Header (optional)
+          if (widget.showHeader)
+            Positioned(
+              top: 10,
+              left: 12,
+              right: 12,
+              child: Row(
                 children: [
-                  Icon(Icons.touch_app_outlined,
-                      size: 13, color: Colors.white70),
-                  SizedBox(width: 6),
-                  Text(
-                    'Gira con 1 dedo • Zoom / Panorámica con 2 dedos',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 10.5,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.18),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.view_in_ar, size: 13, color: Colors.white.withOpacity(0.85)),
+                        const SizedBox(width: 5),
+                        Text(
+                          '3D FPV MODEL • PBR 4K',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10.5,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  const Spacer(),
+                  if (widget.onToggleFullScreen != null)
+                    InkWell(
+                      onTap: widget.onToggleFullScreen,
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.75),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Icon(
+                          widget.isFullScreen ? Icons.fullscreen_exit : Icons.fullscreen,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-          ),
         ],
       ),
     );
-
-    return container;
   }
 
   Widget _buildLoadingState() {
     return Container(
-      color: const Color(0xFF14171E),
+      color: const Color(0xFF080808),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -231,17 +193,16 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
               alignment: Alignment.center,
               children: [
                 SizedBox(
-                  width: 54,
-                  height: 54,
+                  width: 50,
+                  height: 50,
                   child: CircularProgressIndicator(
                     value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
-                    strokeWidth: 3,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                    strokeWidth: 2.0,
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                     backgroundColor: Colors.white12,
                   ),
                 ),
-                const Icon(Icons.flight_takeoff,
-                    color: Colors.orange, size: 24),
+                const Icon(Icons.flight, color: Colors.white70, size: 22),
               ],
             ),
             const SizedBox(height: 14),
@@ -249,17 +210,17 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
               'Cargando Modelo 3D ($_loadingProgress%)...',
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
                 letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Flywoo Explorer LR 4" + RadioMaster TX12',
+              'Flywoo Explorer LR 4" • RadioMaster TX12',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
-                fontSize: 10.5,
+                color: Colors.white.withOpacity(0.4),
+                fontSize: 10,
               ),
             ),
           ],
@@ -275,14 +236,14 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.wifi_off, color: Colors.orangeAccent, size: 36),
+            const Icon(Icons.wifi_off, color: Colors.white54, size: 32),
             const SizedBox(height: 10),
             const Text(
-              'No se pudo cargar el modelo 3D online',
-              style: TextStyle(color: Colors.white, fontSize: 13),
+              'Visor 3D offline / sin conexión',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
             ),
             const SizedBox(height: 8),
-            ElevatedButton.icon(
+            TextButton.icon(
               onPressed: () {
                 setState(() {
                   _hasError = false;
@@ -290,11 +251,11 @@ class _FpvDrone3dViewerState extends State<FpvDrone3dViewer> {
                 });
                 _controller.reload();
               },
-              icon: const Icon(Icons.refresh, size: 16),
-              label: const Text('Reintentar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.black,
+              icon: const Icon(Icons.refresh, size: 15, color: Colors.white),
+              label: const Text('Reintentar', style: TextStyle(color: Colors.white)),
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.white.withOpacity(0.1),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               ),
             )
           ],
@@ -317,14 +278,14 @@ void showFpvDrone3dFullScreen(BuildContext context) {
         title: const Text(
           'FPV Kit 3D (Drone & Radio)',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.orange,
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
+            icon: const Icon(Icons.close, color: Colors.white, size: 20),
             onPressed: () => Navigator.pop(ctx),
           ),
         ],
@@ -332,6 +293,7 @@ void showFpvDrone3dFullScreen(BuildContext context) {
       body: const SafeArea(
         child: FpvDrone3dViewer(
           isFullScreen: true,
+          showHeader: false,
         ),
       ),
     ),

@@ -58,9 +58,9 @@ class _ControllerWidgetState extends State<ControllerWidget> {
           width: 16,
           height: 16,
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.8),
+            color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 1),
+            border: Border.all(color: Colors.black, width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black26,
@@ -125,8 +125,8 @@ class _ControllerWidgetState extends State<ControllerWidget> {
               child: Container(
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color: Colors.blue.withOpacity(0.5),
-                    width: 2,
+                    color: Colors.white.withOpacity(0.5),
+                    width: 1.5,
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),

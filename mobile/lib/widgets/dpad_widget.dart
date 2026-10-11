@@ -137,13 +137,13 @@ class CrossPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Warna biru yang lebih solid seperti di gambar
+    // Dark stealth graphite base and white highlight
     final basePaint = Paint()
-      ..color = const Color(0xFF1E4B82) // Warna biru PS4-like
+      ..color = const Color(0xFF242424)
       ..style = PaintingStyle.fill;
 
     final pressedPaint = Paint()
-      ..color = Colors.blue[700]!
+      ..color = Colors.white.withOpacity(0.85)
       ..style = PaintingStyle.fill;
 
     // Buat plus shape yang lebih tight dan sharp
@@ -188,7 +188,7 @@ class CrossPainter extends CustomPainter {
     canvas.drawCircle(
       center,
       armWidth * 0.25, // Jauh lebih kecil
-      Paint()..color = const Color(0xFF1E4B82), // Sama dengan warna base
+      Paint()..color = const Color(0xFF242424), // Sama dengan warna base
     );
 
     // Handle pressed states

@@ -92,8 +92,6 @@ class _ControllerModePageState extends State<ControllerModePage> {
     dpadNotifier.dispose();
     isConnectedNotifier.dispose();
     SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);

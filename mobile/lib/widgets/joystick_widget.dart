@@ -26,9 +26,9 @@ class JoystickWidget extends StatelessWidget {
       height: layout.outerSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.black12,
+        color: Colors.black26,
         border: Border.all(
-          color: isDraggable ? Colors.blue.withOpacity(0.3) : Colors.black26,
+          color: isDraggable ? Colors.white.withOpacity(0.4) : Colors.white24,
           width: 2,
         ),
       ),
@@ -92,7 +92,7 @@ class JoystickWidget extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.blue.withOpacity(0.3),
+          color: Colors.white.withOpacity(0.3),
           width: 1,
         ),
       ),
@@ -119,14 +119,18 @@ class JoystickWidget extends StatelessWidget {
           height: layout.innerSize,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white.withOpacity(0.35),
+              width: 1,
+            ),
             color: state?.isPressed == true
                 ? (state!.isAtMaxIntensity
-                    ? Colors.blue.withOpacity(0.9)
-                    : Colors.blue.withOpacity(0.7))
-                : Colors.blue.withOpacity(0.5),
+                    ? Colors.white.withOpacity(0.9)
+                    : Colors.white.withOpacity(0.7))
+                : Colors.white.withOpacity(0.45),
             boxShadow: [
               BoxShadow(
-                color: Colors.black26,
+                color: Colors.black45,
                 blurRadius: 5,
                 spreadRadius: 1,
               ),
