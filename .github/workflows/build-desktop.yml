@@ -3,7 +3,7 @@ name: Compilar Servidor PC Windows (.exe)
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Permite compilar manualmente desde GitHub Actions
+  workflow_dispatch:
 
 jobs:
   build-desktop:
@@ -21,21 +21,33 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
-          cache: 'pip'
 
-      - name: Instalar dependencias
+      # Cache de pip — si requirements.txt no cambio, salta la instalacion
+      - name: Restaurar cache de pip (wheels pre-compilados)
+        uses: actions/cache@v4
+        with:
+          path: ~\AppData\Local\pip\Cache
+          key: pip-win-py310-${{ hashFiles('desktop/requirements.txt') }}-v2
+          restore-keys: |
+            pip-win-py310-
+
+      - name: Instalar dependencias (solo binarios, sin compilar)
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          python -m pip install --upgrade pip wheel setuptools
+          pip install --prefer-binary -r requirements.txt
+          pip install --prefer-binary pyinstaller
 
       - name: Empaquetar con PyInstaller (.exe portable)
         run: |
-          pyinstaller --noconfirm --onedir --windowed --name "BuanaVPad-FPV" --icon "src/gui/resources/icon.ico" main.py
+          pyinstaller --noconfirm --onedir --windowed --name "BuanaVPad-FPV" main.py
 
-      - name: Subir aplicacion de PC compilada (.zip / artefacto)
+      - name: Comprimir distribucion
+        run: |
+          Compress-Archive -Path dist\BuanaVPad-FPV\* -DestinationPath dist\BuanaVPad-FPV-Windows.zip
+
+      - name: Subir .exe compilado
         uses: actions/upload-artifact@v4
         with:
           name: BuanaVPad-PC-FPV-Windows
-          path: desktop/dist/BuanaVPad-FPV/
-          retention-days: 14
+          path: desktop/dist/BuanaVPad-FPV-Windows.zip
+          retention-days: 30
