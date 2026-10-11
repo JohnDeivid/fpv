@@ -10,6 +10,7 @@ from src.gui.components.server_tab import ServerControlTab
 from src.gui.components.monitor_tab import ConnectionsMonitorTab
 from src.gui.components.remote_server_tab import RemoteServerTab
 from src.gui.components.remote_monitor_tab import RemoteConnectionsMonitorTab
+from src.gui.components.fpv_tab import FpvSettingsTab
 from src.utils.server_events import server_events
 from src.utils.remote_server_events import remote_server_events
 import asyncio
@@ -96,6 +97,7 @@ class MainWindow(QMainWindow):
         self.monitor_tab = ConnectionsMonitorTab()
         self.remote_tab = RemoteServerTab(self)
         self.remote_monitor_tab = RemoteConnectionsMonitorTab()
+        self.fpv_tab = FpvSettingsTab()
         self.author_tab = AuthorTab()
         
         # Add all tabs
@@ -103,6 +105,7 @@ class MainWindow(QMainWindow):
         tabs.addTab(self.monitor_tab, "Local Gamepad Monitor")
         tabs.addTab(self.remote_tab, "Remote Server Control")
         tabs.addTab(self.remote_monitor_tab, "Remote Gamepad Monitor")
+        tabs.addTab(self.fpv_tab, "🚁 FPV Settings")
         tabs.addTab(self.author_tab, "Author")
 
     def setup_styles(self):
@@ -165,6 +168,17 @@ class MainWindow(QMainWindow):
         server_events.server_error.connect(self.handle_server_error)
         # Remote server events
         remote_server_events.remote_server_error.connect(self.handle_remote_server_error)
+        # FPV tab sliders → update fpv_manager at runtime
+        self._connect_fpv_signals()
+
+    def _connect_fpv_signals(self):
+        """Wire FPV settings tab signals to the shared fpv_manager instance."""
+        try:
+            from src.api.app import fpv_manager
+            self.fpv_tab.expo_changed.connect(lambda v: fpv_manager.set_expo(v))
+            self.fpv_tab.deadzone_changed.connect(lambda v: fpv_manager.set_deadzone(v))
+        except Exception as e:
+            print(f"Could not connect FPV signals: {e}")
 
     async def cleanup(self):
         """Cleanup resources before closing"""

@@ -47,6 +47,7 @@ dependencies:
   url_launcher: ^6.2.4
   image_picker: ^1.0.7  # untuk mengambil image dari galery
   mobile_scanner: ^6.0.2
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_launcher_icons: ^0.13.1

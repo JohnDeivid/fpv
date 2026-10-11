@@ -3,11 +3,14 @@ from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from src.core.controller_manager import ControllerManager
+from src.core.fpv_controller_manager import FpvControllerManager
 from src.utils.config import settings
 import socket
 import asyncio
 
 controller_manager = ControllerManager()
+# FPV manager — shared instance so the GUI can read/write expo & deadzone
+fpv_manager = FpvControllerManager()
 DEVICE_ID = str(uuid.uuid4())
 
 @asynccontextmanager
@@ -131,3 +134,72 @@ async def controller_endpoint(websocket: WebSocket, device_id: str):
    finally:
        if client:
            await controller_manager.remove_client(device_id)
+
+
+# ── FPV Drone Simulator endpoint ─────────────────────────────────────────────
+# Connect your mobile device to this endpoint when using the FPV Mode 2 layout.
+# Axis mapping: Left stick = Throttle+Yaw, Right stick = Pitch+Roll.
+
+@app.websocket("/ws/fpv/{device_id}")
+async def fpv_controller_endpoint(websocket: WebSocket, device_id: str):
+   await websocket.accept()
+   client = None
+
+   try:
+       initial_data = await websocket.receive_json()
+       if initial_data.get("type") in ("connect", "fpv_connect"):
+           device_name = initial_data.get("device_name", "FPV Device")
+
+           try:
+               client = await fpv_manager.add_client(device_id, device_name)
+               await websocket.send_json({
+                   "type": "connect_success",
+                   "mode": "fpv",
+                   "message": "Connected in FPV Mode 2 (Throttle+Yaw / Pitch+Roll)",
+               })
+           except Exception as e:
+               await websocket.send_json({
+                   "type": "connect_error",
+                   "message": str(e),
+               })
+               return
+
+       while True:
+           data = await websocket.receive_json()
+
+           if data.get("type") == "ping":
+               await websocket.send_json({"type": "pong"})
+
+           elif data.get("type") in ("controller_input", "fpv_input") and client:
+               try:
+                   await fpv_manager.handle_input(
+                       device_id,
+                       data.get("data", {}),
+                   )
+               except Exception as e:
+                   print(f"[FPV] Error handling input: {e}")
+
+   except Exception as e:
+       print(f"[FPV] WebSocket error: {e}")
+   finally:
+       if client:
+           await fpv_manager.remove_client(device_id)
+
+
+@app.get("/fpv/settings")
+async def get_fpv_settings():
+   """Return current FPV manager settings."""
+   return {
+       "expo": fpv_manager.expo,
+       "deadzone": fpv_manager.deadzone,
+   }
+
+
+@app.post("/fpv/settings")
+async def set_fpv_settings(expo: float = None, deadzone: float = None):
+   """Update FPV expo and/or deadzone at runtime."""
+   if expo is not None:
+       fpv_manager.set_expo(expo)
+   if deadzone is not None:
+       fpv_manager.set_deadzone(deadzone)
+   return {"expo": fpv_manager.expo, "deadzone": fpv_manager.deadzone}

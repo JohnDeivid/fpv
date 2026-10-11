@@ -7,6 +7,7 @@ import 'package:buana_vpad/models/controller_layout.dart';
 import 'package:buana_vpad/screens/controller_mode_page.dart';
 import 'package:buana_vpad/utils/network_scanner.dart';
 import 'package:buana_vpad/utils/settings_manager.dart';
+import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
 
 class ConnectToPcPage extends StatefulWidget {
   const ConnectToPcPage({super.key});
@@ -24,12 +25,14 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
   bool _isConnecting = false;
   bool _isConnected = false;
   bool _isScanning = false;
+  bool _isFpvMode = false;  // Use /ws/fpv/ endpoint when true
+  bool _showFpv3dPreview = false;
   WebSocket? _socket;
   List<ControllerLayout> _layouts = [];
   ControllerLayout? _selectedLayout;
   List<PCDevice> _discoveredDevices = [];
   StreamSubscription? _scanSubscription;
-  Stream<dynamic>? _broadcastStream;  
+  Stream<dynamic>? _broadcastStream;
   String? _deviceId;
   String? _deviceName;
 
@@ -229,8 +232,10 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
       setState(() => _isConnecting = true);
 
       try {
+        // FPV mode uses a dedicated endpoint with correct axis mapping
+        final wsPath = _isFpvMode ? 'fpv' : 'controller';
         _socket = await WebSocket.connect(
-          'ws://${_ipController.text}:${_portController.text}/ws/controller/$_deviceId'
+          'ws://${_ipController.text}:${_portController.text}/ws/$wsPath/$_deviceId'
         ).timeout(const Duration(seconds: 5), onTimeout: () {
           throw 'Connection timeout. Please check if the IP and port are correct.';
         });
@@ -518,6 +523,11 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                             : (layout) {
                                                 setState(() {
                                                   _selectedLayout = layout;
+                                                  // Auto-enable FPV mode when an FPV layout is selected
+                                                  if (layout != null &&
+                                                      layout.name.toLowerCase().contains('fpv')) {
+                                                    _isFpvMode = true;
+                                                  }
                                                 });
                                               },
                                       ),
@@ -525,6 +535,128 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                   ),
                                 ],
                               ),
+                              const SizedBox(height: 16),
+                              // ── FPV Mode toggle card ──────────────────────
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: _isFpvMode
+                                      ? Colors.orange.withOpacity(0.12)
+                                      : Colors.grey[850],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _isFpvMode
+                                        ? Colors.orange.withOpacity(0.6)
+                                        : Colors.white.withOpacity(0.1),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Text('🚁',
+                                        style: TextStyle(fontSize: 22)),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'FPV Drone Mode',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 15,
+                                            ),
+                                          ),
+                                          Text(
+                                            _isFpvMode
+                                                ? 'Throttle+Yaw / Pitch+Roll  (Mode 2)'
+                                                : 'Standard gamepad mapping',
+                                            style: TextStyle(
+                                              color: Colors.white
+                                                  .withOpacity(0.55),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Switch(
+                                      value: _isFpvMode,
+                                      activeColor: Colors.orange,
+                                      onChanged: _isConnected
+                                          ? null
+                                          : (v) =>
+                                              setState(() => _isFpvMode = v),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (_isFpvMode) ...[
+                                const SizedBox(height: 12),
+                                InkWell(
+                                  onTap: () => setState(() =>
+                                      _showFpv3dPreview = !_showFpv3dPreview),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: Colors.orange.withOpacity(0.35),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.view_in_ar,
+                                            color: Colors.orange, size: 20),
+                                        const SizedBox(width: 10),
+                                        const Expanded(
+                                          child: Text(
+                                            'Ver Kit 3D (Dron & Mando interactivo)',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.fullscreen,
+                                              color: Colors.orange, size: 20),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          tooltip: 'Pantalla completa',
+                                          onPressed: () =>
+                                              showFpvDrone3dFullScreen(context),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          _showFpv3dPreview
+                                              ? Icons.keyboard_arrow_up
+                                              : Icons.keyboard_arrow_down,
+                                          color: Colors.orange,
+                                          size: 20,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                if (_showFpv3dPreview) ...[
+                                  const SizedBox(height: 10),
+                                  FpvDrone3dViewer(
+                                    height: 290,
+                                    onToggleFullScreen: () =>
+                                        showFpvDrone3dFullScreen(context),
+                                  ),
+                                ],
+                              ],
                             const SizedBox(height: 32),
 
                             if (_isScanning || _discoveredDevices.isNotEmpty)

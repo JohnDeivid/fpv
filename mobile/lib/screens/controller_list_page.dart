@@ -4,6 +4,8 @@ import 'package:buana_vpad/database/db_helper.dart';
 import 'package:buana_vpad/models/controller_layout.dart';
 import 'package:buana_vpad/screens/controller_preview_page.dart';
 import 'package:buana_vpad/screens/settings_page.dart';
+import 'package:buana_vpad/utils/fpv_layout_factory.dart';
+import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
 
 class ControllerListPage extends StatefulWidget {
   const ControllerListPage({super.key});
@@ -246,6 +248,166 @@ class _ControllerListPageState extends State<ControllerListPage> {
     }
   }
 
+  /// Shows a bottom sheet so the user can choose between a generic layout
+  /// and a pre-configured FPV drone simulator layout.
+  void _showCreateLayoutMenu() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Choose Controller Type',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Generic controller
+            _buildTemplateOption(
+              icon: Icons.gamepad,
+              iconColor: Colors.blue,
+              title: 'Generic Controller',
+              subtitle: 'Standard gamepad layout (A, B, X, Y + sticks)',
+              onTap: () async {
+                Navigator.pop(context);
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ControllerPreviewPage(),
+                  ),
+                );
+                _setOrientation(context);
+                _loadLayouts();
+              },
+            ),
+            const SizedBox(height: 12),
+            // FPV drone simulator layout
+            _buildTemplateOption(
+              icon: Icons.flight,
+              iconColor: Colors.orange,
+              title: 'FPV Drone Simulator 🚁',
+              subtitle: 'Mode 2: Left stick = Throttle+Yaw, Right = Pitch+Roll',
+              onTap: () async {
+                Navigator.pop(context);
+                await _createAndOpenFpvLayout();
+              },
+            ),
+            const SizedBox(height: 12),
+            // 3D Kit Viewer option
+            _buildTemplateOption(
+              icon: Icons.view_in_ar,
+              iconColor: Colors.amber,
+              title: 'Ver Kit 3D (Dron & Mando) 🥽',
+              subtitle: 'Explora el modelo 3D interactivo en 360° con texturas 4K PBR',
+              onTap: () {
+                Navigator.pop(context);
+                showFpvDrone3dFullScreen(context);
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTemplateOption({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[700]!, width: 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Generates a FPV Mode 2 layout and opens the preview page for final
+  /// naming and saving.
+  Future<void> _createAndOpenFpvLayout() async {
+    final screenSize = MediaQuery.of(context).size;
+    // Use landscape dimensions since controller is used in landscape
+    final w = screenSize.width > screenSize.height
+        ? screenSize.width
+        : screenSize.height;
+    final h = screenSize.width > screenSize.height
+        ? screenSize.height
+        : screenSize.width;
+
+    final fpvLayout = FpvLayoutFactory.createFpvMode2Layout(
+      screenWidth: w,
+      screenHeight: h,
+    );
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ControllerPreviewPage(
+          initialLayout: fpvLayout,
+        ),
+      ),
+    );
+    _setOrientation(context);
+    _loadLayouts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -315,17 +477,7 @@ class _ControllerListPageState extends State<ControllerListPage> {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton.icon(
-                            onPressed: () async {
-                              await Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ControllerPreviewPage(),
-                                ),
-                              );
-                              _setOrientation(context);
-                              _loadLayouts();
-                            },
+                            onPressed: _showCreateLayoutMenu,
                             icon: const Icon(Icons.add),
                             label: const Text('Create New Controller'),
                             style: ElevatedButton.styleFrom(
@@ -352,18 +504,10 @@ class _ControllerListPageState extends State<ControllerListPage> {
         ),
         floatingActionButton: layouts.isNotEmpty
             ? FloatingActionButton(
-                onPressed: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ControllerPreviewPage(),
-                    ),
-                  );
-                  _setOrientation(context);
-                  _loadLayouts();
-                },
+                onPressed: _showCreateLayoutMenu,
                 backgroundColor: Colors.blue[700],
                 child: const Icon(Icons.add),
+                tooltip: 'Create Controller',
               )
             : null,
       ),
