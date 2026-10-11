@@ -6,14 +6,9 @@ import 'package:buana_vpad/screens/homepage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Inisialisasi database berdasarkan platform
   await initializeDatabase();
-
-  // Inisialisasi database
   final dbHelper = DatabaseHelper();
   await dbHelper.database;
-
   runApp(const MyApp());
 }
 
@@ -23,16 +18,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Buana VPad',
+      title: 'FPV Controller',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        fontFamily: 'SF Pro Display',
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF00D4FF),
+          secondary: Color(0xFF0099CC),
+          surface: Color(0xFF0A0E17),
+          background: Color(0xFF060A12),
+        ),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.deepPurple,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
           elevation: 0,
+          foregroundColor: Colors.white,
         ),
+        scaffoldBackgroundColor: const Color(0xFF060A12),
       ),
       home: const HomePage(),
     );

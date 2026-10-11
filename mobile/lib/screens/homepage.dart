@@ -1,12 +1,54 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:buana_vpad/enums/link.dart';
+import 'package:flutter/services.dart';
 import 'package:buana_vpad/screens/connect_page.dart';
 import 'package:buana_vpad/screens/controller_list_page.dart';
 import 'package:buana_vpad/screens/settings_page.dart';
+import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
+import 'package:buana_vpad/widgets/fpv_ui_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:buana_vpad/enums/link.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _droneController;
+  late Animation<double> _droneFloat;
+  late Animation<double> _droneRotate;
+  bool _menuOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    _droneController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    _droneFloat = Tween<double>(begin: -8, end: 8).animate(
+      CurvedAnimation(parent: _droneController, curve: Curves.easeInOut),
+    );
+
+    _droneRotate = Tween<double>(begin: -0.015, end: 0.015).animate(
+      CurvedAnimation(parent: _droneController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _droneController.dispose();
+    super.dispose();
+  }
 
   Future<void> _launchUrl(String url) async {
     if (!await launchUrl(Uri.parse(url))) {
@@ -14,438 +56,481 @@ class HomePage extends StatelessWidget {
     }
   }
 
-  void _showAboutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[850],
-        title: Row(
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF060A12),
+      body: FpvAnimatedBackground(
+        child: Stack(
           children: [
-            Icon(
-              Icons.gamepad,
-              color: Colors.blue[400],
-              size: 28,
+            // ── Main scrollable content ───────────────────────────────
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+
+                    // ── Top bar ─────────────────────────────────────
+                    _buildTopBar(context),
+
+                    const SizedBox(height: 8),
+
+                    // ── Hero: 3D Model Viewer ────────────────────────
+                    _build3DHero(context, size),
+
+                    const SizedBox(height: 28),
+
+                    // ── Section label ────────────────────────────────
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 24),
+                      child: _SectionLabel(
+                          label: 'MY CONTROLLERS', icon: Icons.sports_esports),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Controller quick-cards ───────────────────────
+                    _ControllerQuickList(
+                      onOpenAll: () => Navigator.push(
+                        context,
+                        _route(const ControllerListPage()),
+                      ),
+                    ),
+
+                    const SizedBox(height: 100), // space for FAB area
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-            const Text(
-              'About App',
-              style: TextStyle(color: Colors.white),
-            ),
+
+            // ── Floating Action Menu ─────────────────────────────────
+            _buildFloatingMenu(context),
           ],
         ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Version 1.0.5',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'BuanaVPad turns your mobile device into a virtual gamepad for PC gaming. Create custom layouts and enjoy your games with a personalized touch-based controller.',
-                style: TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              _buildFeatureItem(
-                Icons.download,
-                'Desktop App Required',
-                'Download our companion app to receive gamepad inputs from your mobile device',
-              ),
-              _buildFeatureItem(
-                Icons.build,
-                'Create Controller',
-                'Design your own virtual gamepad layout or use existing templates',
-              ),
-              _buildFeatureItem(
-                Icons.wifi,
-                'Easy Connection',
-                'Connect through local network or remote server for extended range',
-              ),
-              _buildFeatureItem(
-                Icons.gamepad,
-                'Play Games',
-                'Compatible with PC games that support standard gamepad input',
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Need Help?',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Check our documentation in settings for setup guides, troubleshooting tips, and tutorials on creating custom gamepad layouts.',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: Colors.blue[400]),
-            ),
-          ),
-        ],
       ),
     );
   }
 
-  void _showDownloadDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[850],
-        title: Row(
-          children: [
-            Icon(
-              Icons.download,
-              color: Colors.green[400],
-              size: 28,
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'Download PC App',
-              style: TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'To use BuanaVPad, you\'ll need to install our companion app on your PC. Choose your operating system:',
-                style: TextStyle(color: Colors.white),
-              ),
-              const SizedBox(height: 16),
-              _buildDownloadButton(
-                context,
-                'Windows',
-                Icons.window,
-                Link.windowsDownload.path,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Need help with installation?',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Check our documentation in settings for detailed installation guides.',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Close',
-              style: TextStyle(color: Colors.blue[400]),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDownloadButton(
-    BuildContext context,
-    String os,
-    IconData icon,
-    String url,
-  ) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () => _launchUrl(Link.windowsDownload.path),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue[400],
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        icon: Icon(icon, size: 24),
-        label: Text(
-          'Download for $os',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem(IconData icon, String title, String description) {
+  // ── TOP BAR ──────────────────────────────────────────────────────────────
+  Widget _buildTopBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 20,
-            color: Colors.blue[400],
+          // Logo / Brand
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'FPV Controller',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              Text(
+                'PILOT MODE',
+                style: TextStyle(
+                  color: const Color(0xFF00D4FF).withOpacity(0.8),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 2.5,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+          const Spacer(),
+          // Settings icon — small, Apple-style
+          GestureDetector(
+            onTap: () => Navigator.push(context, _route(const SettingsPage())),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.07),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.10),
+                  width: 0.8,
                 ),
-                Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+              ),
+              child: const Icon(Icons.settings, color: Colors.white, size: 17),
             ),
           ),
         ],
       ),
     );
   }
+
+  // ── 3D HERO MODEL ─────────────────────────────────────────────────────────
+  Widget _build3DHero(BuildContext context, Size size) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GlassCard(
+        padding: EdgeInsets.zero,
+        borderRadius: 28,
+        opacity: 0.04,
+        borderColor: const Color(0xFF00D4FF).withOpacity(0.15),
+        child: Column(
+          children: [
+            // 3D WebGL Model — gentle float animation via transform on the card
+            AnimatedBuilder(
+              animation: _droneFloat,
+              builder: (_, child) => Transform.translate(
+                offset: Offset(0, _droneFloat.value * 0.3),
+                child: child,
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
+                child: FpvDrone3dViewer(
+                  height: size.height * 0.38,
+                  onToggleFullScreen: () => showFpvDrone3dFullScreen(context),
+                ),
+              ),
+            ),
+
+            // Caption bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+              child: Row(
+                children: [
+                  const PillBadge(
+                      label: '4K PBR', color: Color(0xFF00D4FF)),
+                  const SizedBox(width: 8),
+                  const PillBadge(
+                      label: 'INTERACTIVE 3D', color: Color(0xFF7B61FF)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () => showFpvDrone3dFullScreen(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00D4FF).withOpacity(0.10),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF00D4FF).withOpacity(0.30),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.fullscreen,
+                              color: Color(0xFF00D4FF), size: 15),
+                          SizedBox(width: 4),
+                          Text(
+                            'Full View',
+                            style: TextStyle(
+                              color: Color(0xFF00D4FF),
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── FLOATING ACTION MENU ──────────────────────────────────────────────────
+  Widget _buildFloatingMenu(BuildContext context) {
+    return Positioned(
+      bottom: 28,
+      right: 24,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Expanded sub-options (visible when _menuOpen)
+          AnimatedOpacity(
+            opacity: _menuOpen ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: AnimatedSlide(
+              offset: _menuOpen ? Offset.zero : const Offset(0, 0.3),
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  _FloatingMenuItem(
+                    icon: Icons.sports_esports_outlined,
+                    label: 'My Controllers',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      Navigator.push(
+                          context, _route(const ControllerListPage()));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _FloatingMenuItem(
+                    icon: Icons.wifi_outlined,
+                    label: 'Connect',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      Navigator.push(context, _route(const ConnectPage()));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _FloatingMenuItem(
+                    icon: Icons.download_outlined,
+                    label: 'Get Desktop App',
+                    onTap: () {
+                      setState(() => _menuOpen = false);
+                      _launchUrl(Link.windowsDownload.path);
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                ],
+              ),
+            ),
+          ),
+
+          // Main FAB — gamepad icon
+          GestureDetector(
+            onTap: () => setState(() => _menuOpen = !_menuOpen),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF00D4FF), Color(0xFF0085A3)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF00D4FF).withOpacity(0.45),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: AnimatedRotation(
+                turns: _menuOpen ? 0.125 : 0,
+                duration: const Duration(milliseconds: 250),
+                child: const Icon(
+                  Icons.sports_esports,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PageRoute _route(Widget page) =>
+      MaterialPageRoute(builder: (_) => page);
+}
+
+// ── SUB WIDGETS ──────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  const _SectionLabel({required this.label, required this.icon});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: MediaQuery.of(context).size.width,
-        height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.grey[900]!,
-              Colors.grey[850]!,
-            ],
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF00D4FF), size: 14),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.45),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.8,
           ),
         ),
-        child: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // App Title Section
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 40, 24, 40),
-                  child: Column(
-                    children: [
-                      Text(
-                        'BuanaVPad',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[400],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Turn your mobile into a PC game controller',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.white.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+      ],
+    );
+  }
+}
 
-                // Main Menu Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-                      _MenuButton(
-                        icon: Icons.gamepad,
-                        title: 'My Controllers',
-                        subtitle: 'Manage your controller layouts',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ControllerListPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _MenuButton(
-                        icon: Icons.wifi,
-                        title: 'Connect',
-                        subtitle: 'Connect to your PC or server',
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ConnectPage(),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      _MenuButton(
-                        icon: Icons.download,
-                        title: 'Get Desktop App',
-                        subtitle:
-                            'The desktop app is required to use your virtual controllers',
-                        onTap: () => _showDownloadDialog(context),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
+class _FloatingMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _FloatingMenuItem(
+      {required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label pill
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                  color: Colors.white.withOpacity(0.09), width: 0.8),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.3), blurRadius: 10)
               ],
             ),
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        color: Colors.grey[900],
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: Icon(
-                    Icons.settings,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsPage(),
-                      ),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.info_outline,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  onPressed: () => _showAboutDialog(context),
-                ),
-              ],
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        ),
+          const SizedBox(width: 10),
+          // Icon circle
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.09),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: Colors.white.withOpacity(0.12), width: 0.8),
+            ),
+            child: Icon(icon, color: Colors.white, size: 18),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MenuButton extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color? backgroundColor;
-  final Color? iconColor;
-
-  const _MenuButton({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.backgroundColor,
-    this.iconColor,
-  });
+/// Quick controller cards shown on the home screen
+class _ControllerQuickList extends StatelessWidget {
+  final VoidCallback onOpenAll;
+  const _ControllerQuickList({required this.onOpenAll});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 8,
-      color: Colors.grey[850],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: backgroundColor ?? Colors.blue.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            borderRadius: 18,
+            onTap: onOpenAll,
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B00).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: const Color(0xFFFF6B00).withOpacity(0.3),
+                        width: 0.8),
+                  ),
+                  child: const Icon(Icons.flight,
+                      color: Color(0xFFFF6B00), size: 22),
                 ),
-                child: Icon(
-                  icon,
-                  size: 32,
-                  color: iconColor ?? Colors.blue[400],
-                ),
-              ),
-              const SizedBox(width: 20),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'FPV Mode 2 🚁',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.white.withOpacity(0.7),
+                      SizedBox(height: 2),
+                      Text(
+                        'Throttle + Yaw / Pitch + Roll',
+                        style:
+                            TextStyle(color: Color(0xFF8899AA), fontSize: 11),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.white.withOpacity(0.3),
-              ),
-            ],
+                const PillBadge(label: 'FPV', color: Color(0xFFFF6B00)),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right,
+                    color: Color(0xFF445566), size: 18),
+              ],
+            ),
           ),
-        ),
+          const SizedBox(height: 10),
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            borderRadius: 18,
+            onTap: onOpenAll,
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00D4FF).withOpacity(0.10),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                        color: const Color(0xFF00D4FF).withOpacity(0.25),
+                        width: 0.8),
+                  ),
+                  child: const Icon(Icons.gamepad_outlined,
+                      color: Color(0xFF00D4FF), size: 22),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Ver todos los mandos',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        'Gestionar layouts personalizados',
+                        style:
+                            TextStyle(color: Color(0xFF8899AA), fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right,
+                    color: Color(0xFF445566), size: 18),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
