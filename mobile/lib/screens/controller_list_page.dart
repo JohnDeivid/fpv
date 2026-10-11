@@ -5,7 +5,6 @@ import 'package:buana_vpad/database/db_helper.dart';
 import 'package:buana_vpad/models/controller_layout.dart';
 import 'package:buana_vpad/screens/controller_preview_page.dart';
 import 'package:buana_vpad/utils/fpv_layout_factory.dart';
-import 'package:buana_vpad/widgets/fpv_drone_3d_viewer.dart';
 import 'package:buana_vpad/widgets/fpv_ui_kit.dart';
 
 // ── Controller template definitions using clean vector icons (NO URL/Browser images) ──

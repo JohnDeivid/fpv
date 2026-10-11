@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
@@ -297,4 +298,199 @@ class _ThreeDiagonalStripesPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_ThreeDiagonalStripesPainter oldDelegate) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GlassCard — Liquid glass card for secondary screens (settings, connect, etc.)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Frosted glass card widget used across secondary screens.
+/// Supports optional tap, custom padding, border radius, and border color.
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
+  final Color? borderColor;
+  final VoidCallback? onTap;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.borderRadius = 16,
+    this.borderColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveBorder = borderColor ?? Colors.white.withOpacity(0.18);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: Colors.white.withOpacity(0.10),
+            highlightColor: Colors.white.withOpacity(0.05),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.10),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(borderRadius),
+                border: Border.all(
+                  color: effectiveBorder,
+                  width: 0.8,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.20),
+                    blurRadius: 16,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: padding ?? const EdgeInsets.all(16),
+              child: child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FpvAnimatedBackground — Animated dark studio background for secondary screens
+// Uses the same studio wall aesthetic but with a subtle continuous animation.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class FpvAnimatedBackground extends StatefulWidget {
+  final Widget child;
+  const FpvAnimatedBackground({super.key, required this.child});
+
+  @override
+  State<FpvAnimatedBackground> createState() => _FpvAnimatedBackgroundState();
+}
+
+class _FpvAnimatedBackgroundState extends State<FpvAnimatedBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (ctx, child) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            // Base deep black
+            Container(color: const Color(0xFF030303)),
+
+            // Animated warm spotlight from the top
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment(
+                      math.sin(_ctrl.value * math.pi * 2) * 0.10,
+                      -0.90,
+                    ),
+                    radius: 1.2 + (_ctrl.value * 0.15),
+                    colors: [
+                      Color.fromRGBO(255, 165, 80,
+                          0.20 + (_ctrl.value * 0.08)),
+                      Color.fromRGBO(255, 130, 40, 0.08),
+                      Colors.transparent,
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            // Bottom vignette
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.35),
+                      Colors.black.withOpacity(0.80),
+                    ],
+                    stops: const [0.45, 0.80, 1.0],
+                  ),
+                ),
+              ),
+            ),
+
+            // Subtle studio wall lines
+            CustomPaint(
+              size: Size.infinite,
+              painter: _AnimatedWallPainter(_ctrl.value),
+            ),
+
+            // Foreground
+            child!,
+          ],
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+class _AnimatedWallPainter extends CustomPainter {
+  final double t;
+  const _AnimatedWallPainter(this.t);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = Colors.white.withOpacity(0.018 + t * 0.008)
+      ..strokeWidth = 1.0;
+
+    const step = 90.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height * 0.72), linePaint);
+    }
+
+    final seamPaint = Paint()
+      ..color = Colors.white.withOpacity(0.030)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(
+        Offset(0, size.height * 0.72),
+        Offset(size.width, size.height * 0.72),
+        seamPaint);
+  }
+
+  @override
+  bool shouldRepaint(_AnimatedWallPainter old) => old.t != t;
 }
