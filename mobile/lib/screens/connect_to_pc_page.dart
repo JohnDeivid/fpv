@@ -628,15 +628,7 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                             ),
                                           ),
                                         ),
-                                        IconButton(
-                                          icon: const Icon(Icons.fullscreen,
-                                              color: Colors.white, size: 20),
-                                          padding: EdgeInsets.zero,
-                                          constraints: const BoxConstraints(),
-                                          tooltip: 'Pantalla completa',
-                                          onPressed: () =>
-                                              showFpvDrone3dFullScreen(context),
-                                        ),
+
                                         const SizedBox(width: 8),
                                         Icon(
                                           _showFpv3dPreview
@@ -653,8 +645,6 @@ class _ConnectToPcPageState extends State<ConnectToPcPage> {
                                   const SizedBox(height: 10),
                                   FpvDrone3dViewer(
                                     height: 290,
-                                    onToggleFullScreen: () =>
-                                        showFpvDrone3dFullScreen(context),
                                   ),
                                 ],
                               ],
