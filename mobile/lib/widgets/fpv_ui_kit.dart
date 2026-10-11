@@ -1,164 +1,107 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// Animated background with subtle particle sweep and dark aesthetic.
-/// Pure monochrome: deep blacks, dark slate, subtle white accents. ZERO BLUE.
-class FpvAnimatedBackground extends StatefulWidget {
+/// Studio background with a faint textured wall and a soft overhead warm light
+/// behind the 3D model, as requested.
+class FpvStudioBackground extends StatelessWidget {
   final Widget child;
-  const FpvAnimatedBackground({super.key, required this.child});
-
-  @override
-  State<FpvAnimatedBackground> createState() => _FpvAnimatedBackgroundState();
-}
-
-class _FpvAnimatedBackgroundState extends State<FpvAnimatedBackground>
-    with TickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final AnimationController _scanController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 5),
-    )..repeat(reverse: true);
-
-    _scanController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 8),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    _scanController.dispose();
-    super.dispose();
-  }
+  const FpvStudioBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
-        // Pitch black to deep dark charcoal gradient
-        Container(
-          decoration: const BoxDecoration(
-            gradient: RadialGradient(
-              center: Alignment(0, 0),
-              radius: 1.4,
-              colors: [
-                Color(0xFF141414),
-                Color(0xFF080808),
-                Color(0xFF000000),
-              ],
-              stops: [0.0, 0.65, 1.0],
+        // Base dark floor/wall
+        Container(color: const Color(0xFF030303)),
+
+        // Faint industrial studio wall texture (vertical seam lines)
+        CustomPaint(
+          size: Size.infinite,
+          painter: _StudioWallPainter(),
+        ),
+
+        // Overhead soft warm spotlight hitting from top-center
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -0.95),
+                radius: 1.35,
+                colors: [
+                  Color(0x38FFA654), // Soft warm golden glow
+                  Color(0x16FF9433),
+                  Color(0x05FF8800),
+                  Colors.transparent,
+                ],
+                stops: [0.0, 0.35, 0.70, 1.0],
+              ),
             ),
           ),
         ),
 
-        // Subtle fine grid pattern in white with very low opacity
-        CustomPaint(
-          size: Size.infinite,
-          painter: _GridPainter(),
-        ),
-
-        // Subtle ambient center halo
-        AnimatedBuilder(
-          animation: _pulseController,
-          builder: (_, __) {
-            final opacity = 0.02 + _pulseController.value * 0.025;
-            return Center(
-              child: Container(
-                width: 500,
-                height: 500,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      Colors.white.withOpacity(opacity),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
+        // Ambient floor vignette
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Colors.black.withOpacity(0.4),
+                  Colors.black.withOpacity(0.85),
+                ],
+                stops: const [0.4, 0.8, 1.0],
               ),
-            );
-          },
+            ),
+          ),
         ),
 
-        // Subtle horizontal scanline pass
-        AnimatedBuilder(
-          animation: _scanController,
-          builder: (_, __) {
-            final h = MediaQuery.of(context).size.height;
-            final y = _scanController.value * h * 1.2 - h * 0.1;
-            return Positioned(
-              top: y,
-              left: 0,
-              right: 0,
-              child: Container(
-                height: 1.0,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.white.withOpacity(0.06),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-
-        // Main content
-        widget.child,
+        // Foreground content
+        child,
       ],
     );
   }
 }
 
-class _GridPainter extends CustomPainter {
+class _StudioWallPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.018)
-      ..strokeWidth = 0.5;
+    final linePaint = Paint()
+      ..color = Colors.white.withOpacity(0.02)
+      ..strokeWidth = 1.0;
 
-    const step = 48.0;
+    // Draw faint vertical wall panel seams
+    const step = 90.0;
     for (double x = 0; x < size.width; x += step) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height * 0.75), linePaint);
     }
-    for (double y = 0; y < size.height; y += step) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
+
+    // Faint horizontal baseline seam
+    final seamPaint = Paint()
+      ..color = Colors.white.withOpacity(0.035)
+      ..strokeWidth = 1.0;
+    canvas.drawLine(
+        Offset(0, size.height * 0.75), Offset(size.width, size.height * 0.75), seamPaint);
   }
 
   @override
-  bool shouldRepaint(_GridPainter oldDelegate) => false;
+  bool shouldRepaint(_StudioWallPainter oldDelegate) => false;
 }
 
-/// Glassmorphic frosted card with real backdrop filter blur.
-class GlassCard extends StatelessWidget {
+/// Apple Liquid Glass card: transparent with heavy frosted blur and crisp borders.
+class LiquidGlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final double opacity;
-  final double blur;
-  final Color? borderColor;
-  final Color? backgroundColor;
   final VoidCallback? onTap;
 
-  const GlassCard({
+  const LiquidGlassCard({
     super.key,
     required this.child,
     this.padding,
-    this.borderRadius = 20,
-    this.opacity = 0.06,
-    this.blur = 16.0,
-    this.borderColor,
-    this.backgroundColor,
+    this.borderRadius = 18,
     this.onTap,
   });
 
@@ -167,26 +110,34 @@ class GlassCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
+        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: onTap,
-            splashColor: Colors.white.withOpacity(0.08),
-            highlightColor: Colors.white.withOpacity(0.04),
+            splashColor: Colors.white.withOpacity(0.12),
+            highlightColor: Colors.white.withOpacity(0.06),
             child: Container(
               decoration: BoxDecoration(
-                color: backgroundColor ?? Colors.white.withOpacity(opacity),
+                // Liquid glass translucency (mostly transparent, not black carbon)
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white.withOpacity(0.12),
+                    Colors.white.withOpacity(0.04),
+                  ],
+                ),
                 borderRadius: BorderRadius.circular(borderRadius),
                 border: Border.all(
-                  color: borderColor ?? Colors.white.withOpacity(0.12),
-                  width: 0.8,
+                  color: Colors.white.withOpacity(0.24),
+                  width: 1.0,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.4),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
                   ),
                 ],
               ),
@@ -200,43 +151,40 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// Minimalist pill badge with monochrome styling
+/// Apple Liquid Glass pill badge
 class PillBadge extends StatelessWidget {
   final String label;
-  final Color? color;
   final IconData? icon;
 
   const PillBadge({
     super.key,
     required this.label,
-    this.color,
     this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? Colors.white;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: c.withOpacity(0.10),
+        color: Colors.white.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: c.withOpacity(0.25), width: 0.8),
+        border: Border.all(color: Colors.white.withOpacity(0.25), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 10, color: c.withOpacity(0.85)),
-            const SizedBox(width: 4),
+            Icon(icon, size: 9, color: Colors.white),
+            const SizedBox(width: 3),
           ],
           Text(
             label,
-            style: TextStyle(
-              color: c.withOpacity(0.9),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
             ),
           ),
         ],
@@ -245,115 +193,108 @@ class PillBadge extends StatelessWidget {
   }
 }
 
-/// Frosted capsule bar with 5 dots loader / signal indicator.
-/// Animates signal wave pulses and indicates connected / scanning state.
-class SignalDotsBar extends StatefulWidget {
-  final int activeCount;
-  final bool isScanning;
-  final VoidCallback? onTap;
+/// White button with 3 diagonal transparent stripes as requested by the user.
+/// Aesthetic: pure white, 3 slashes cut across, labeled "CONECTAR".
+class StripedConnectButton extends StatelessWidget {
+  final VoidCallback onTap;
 
-  const SignalDotsBar({
+  const StripedConnectButton({
     super.key,
-    this.activeCount = 3,
-    this.isScanning = true,
-    this.onTap,
+    required this.onTap,
   });
-
-  @override
-  State<SignalDotsBar> createState() => _SignalDotsBarState();
-}
-
-class _SignalDotsBarState extends State<SignalDotsBar>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
-
-  @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(22),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
-              color: const Color(0x33141414),
-              borderRadius: BorderRadius.circular(30),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: Colors.white.withOpacity(0.14),
-                width: 0.8,
+                color: Colors.white.withOpacity(0.4),
+                width: 1.0,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.white.withOpacity(0.25),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
                 ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
               ],
             ),
-            child: AnimatedBuilder(
-              animation: _animController,
-              builder: (context, _) {
-                return Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(5, (index) {
-                    double dotOpacity;
-                    if (widget.isScanning) {
-                      // Wave animation from left to right across 5 dots
-                      final wavePos = (_animController.value * 5);
-                      final dist = (wavePos - index).abs();
-                      if (dist < 1.2) {
-                        dotOpacity = 0.95 - (dist * 0.45);
-                      } else {
-                        dotOpacity = 0.22;
-                      }
-                    } else {
-                      dotOpacity = index < widget.activeCount ? 0.95 : 0.22;
-                    }
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // The 3 diagonal transparent stripes drawn on the right side
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _ThreeDiagonalStripesPainter(),
+                  ),
+                ),
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: Container(
-                        width: index == 1 && !widget.isScanning ? 7 : 6,
-                        height: index == 1 && !widget.isScanning ? 7 : 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(dotOpacity.clamp(0.18, 1.0)),
-                          boxShadow: dotOpacity > 0.7
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.4),
-                                    blurRadius: 6,
-                                    spreadRadius: 1,
-                                  ),
-                                ]
-                              : null,
-                        ),
+                // Button label and connection icon
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.power_settings_new,
+                      color: Colors.black,
+                      size: 17,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'CONECTAR',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.2,
                       ),
-                    );
-                  }),
-                );
-              },
+                    ),
+                    SizedBox(width: 20), // breathing room for the 3 diagonal stripes
+                  ],
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Draws 3 diagonal transparent stripes across the right portion of the button
+class _ThreeDiagonalStripesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stripePaint = Paint()
+      ..color = Colors.black.withOpacity(0.18) // semi-transparent cut
+      ..strokeWidth = 3.2
+      ..style = PaintingStyle.stroke;
+
+    final startX = size.width - 24;
+    for (int i = 0; i < 3; i++) {
+      final x = startX + (i * 6.5);
+      canvas.drawLine(
+        Offset(x, 4),
+        Offset(x - 8, size.height - 4),
+        stripePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ThreeDiagonalStripesPainter oldDelegate) => false;
 }
