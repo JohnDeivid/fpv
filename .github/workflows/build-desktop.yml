@@ -22,20 +22,32 @@ jobs:
         with:
           python-version: "3.10"
 
-      # Cache de pip — si requirements.txt no cambio, salta la instalacion
-      - name: Restaurar cache de pip (wheels pre-compilados)
+      # uv = pip pero 10-100x mas rapido, con cache automatico
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "desktop/requirements.txt"
+
+      # vgamepad no tiene wheel en PyPI, hay que compilarlo.
+      # Lo cacheamos para que solo se compile UNA VEZ en toda la vida del repo.
+      - name: Cache del wheel compilado de vgamepad
+        id: vgamepad-cache
         uses: actions/cache@v4
         with:
-          path: ~\AppData\Local\pip\Cache
-          key: pip-win-py310-${{ hashFiles('desktop/requirements.txt') }}-v2
-          restore-keys: |
-            pip-win-py310-
+          path: desktop/wheels/
+          key: vgamepad-wheel-win-py310-0.1.0-final
 
-      - name: Instalar dependencias (solo binarios, sin compilar)
+      - name: Compilar vgamepad como wheel (solo la primera vez)
+        if: steps.vgamepad-cache.outputs.cache-hit != 'true'
         run: |
-          python -m pip install --upgrade pip wheel setuptools
-          pip install --prefer-binary -r requirements.txt
-          pip install --prefer-binary pyinstaller
+          python -m pip install wheel
+          python -m pip wheel vgamepad==0.1.0 --wheel-dir wheels/
+
+      - name: Instalar todas las dependencias con uv
+        run: |
+          uv pip install --system --find-links wheels/ -r requirements.txt
+          uv pip install --system pyinstaller
 
       - name: Empaquetar con PyInstaller (.exe portable)
         run: |
