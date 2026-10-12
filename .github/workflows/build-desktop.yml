@@ -9,6 +9,8 @@ jobs:
   build-desktop:
     name: Compilar BuanaVPad PC FPV (.exe)
     runs-on: windows-latest
+    env:
+      VGAMEPAD_SKIP_VIGEMBUS_INSTALL: "true"
     defaults:
       run:
         working-directory: desktop
